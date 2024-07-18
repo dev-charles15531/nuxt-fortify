@@ -28,8 +28,22 @@ export default defineNuxtModule<BaseModuleOptions>({
       login: "/login",
       logout: "/logout",
       user: "/user",
+      tfa: {
+        enable: "/user/two-factor-authentication",
+        disable: "/user/two-factor-authentication",
+        code: "/user/two-factor-qr-code",
+        recoveryCode: "/user/two-factor-recovery-codes",
+        challenge: "/two-factor-challenge",
+      },
     },
     intendedRedirect: true,
+    features: {
+      registration: true,
+      resetPasswords: true,
+      emailVerification: true,
+    },
+    tfaAfterLogin: false,
+    tfaRoute: "/two-factor-authentication",
   },
   async setup(_options, _nuxt) {
     const resolver = createResolver(import.meta.url);

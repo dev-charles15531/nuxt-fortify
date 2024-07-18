@@ -50,6 +50,21 @@ export interface BaseModuleOptions {
   intendedRedirect: Boolean;
 
   /**
+   * The features to enable.
+   */
+  features?: FortifyFeatures;
+
+  /**
+   * Whether to redirect to Two Factor Authentication page after successful login.
+   */
+  tfaAfterLogin: Boolean;
+
+  /**
+   * The route to redirect to for Two Factor Authentication.
+   */
+  tfaRoute: string;
+
+  /**
    * The log level to use for the module.
    */
   logLevel: LogLevel;
@@ -76,4 +91,49 @@ export interface ApiEndpoints {
    * @default '/user'
    */
   user: string;
+
+  tfa?: {
+    enable: string;
+    code: string;
+    recoveryCode: string;
+    challenge: string;
+    disable: string;
+  };
+}
+
+export interface FortifyFeatures {
+  /**
+   * Whether to enable registration feature.
+   * @default true
+   */
+  registration: Boolean;
+
+  /**
+   * Whether to enable reset password feature.
+   * @default true
+   */
+  resetPasswords: Boolean;
+
+  /**
+   * Whether to enable email verification feature.
+   * @default true
+   */
+  emailVerification: Boolean;
+
+  /**
+   * Whether to enable user profile update feature.
+   * @default false
+   */
+  updateProfileInformation?: Boolean;
+
+  /**
+   * Whether to enable user password update feature.
+   * @default false
+   */
+  updatePasswords?: Boolean;
+
+  /**
+   * Whether to enable two factor authentication feature.
+   */
+  twoFactorAuthentication?: Boolean;
 }

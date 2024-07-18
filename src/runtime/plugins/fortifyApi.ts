@@ -4,6 +4,7 @@ import {
   useCookie,
   navigateTo,
   useRoute,
+  type NuxtApp,
 } from "#app";
 import { useFortifyIntendedRedirect } from "../composables/useFortifyIntendedRedirect";
 import { useFortifyUser } from "../composables/useFortifyUser";
@@ -109,16 +110,15 @@ async function initializeCsrfHeader(
  * @param {Headers} headers - The headers object.
  * @param {BaseModuleOptions} config - The module configuration.
  * @param {ConsolaInstance} logger - The logger instance.
- * @param {Ref<any>} user - The user reference.
  * @returns {Promise<HeadersInit>} - The modified headers with the token.
  */
 async function initializeToken(
   headers: Headers,
   config: BaseModuleOptions,
-  logger: ConsolaInstance,
-  user: Ref<any>
+  logger: ConsolaInstance
 ): Promise<HeadersInit> {
   const token = useCookie(config.tokenStorageKey, { secure: true });
+  const user = useFortifyUser();
 
   if (!token.value) {
     logger.warn(`Token not found`);
@@ -128,14 +128,16 @@ async function initializeToken(
 
   // If the token is present but the user is not present, fetch the user details
   if (token.value && !user.value) {
-    user.value = await $fetch(config.endpoints.user, {
-      baseURL: config.baseUrl,
-      method: "POST",
-      headers: {
-        ...headers,
-        Authorization: `Bearer ${token.value}`,
-      },
-    });
+    try {
+      user.value = await $fetch(config.endpoints.user, {
+        baseURL: config.baseUrl,
+        method: "POST",
+        headers: {
+          ...headers,
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+    } catch (error) {}
   }
 
   if (!user.value) {
@@ -158,17 +160,13 @@ async function initializeToken(
  * @param {BaseModuleOptions} config - The module configuration.
  * @param {FetchOptions} options - The fetch options.
  * @param {ConsolaInstance} logger - The logger instance.
- * @param {Ref<any>} user - The user reference.
  * @returns {Promise<HeadersInit>} - The built request headers.
  */
 async function buildRequestHeaders(
   config: BaseModuleOptions,
   options: FetchOptions,
-  logger: ConsolaInstance,
-  user: Ref<any>
+  logger: ConsolaInstance
 ): Promise<HeadersInit> {
-  // Set of HTTP methods that require secure headers
-  const SECURE_METHODS = new Set(["post", "delete", "put", "patch"]);
   const authMode = config.authMode;
 
   // Default headers with common values
@@ -179,28 +177,21 @@ async function buildRequestHeaders(
     Origin: origin,
   };
 
-  if (SECURE_METHODS.has(options.method?.toLowerCase() as string)) {
-    if (authMode === "token") {
-      // Initialize headers with token-based authentication
-      return {
-        ...defaultHeaders,
-        ...(await initializeToken(
-          defaultHeaders as Headers,
-          config,
-          logger,
-          user
-        )),
-      };
-    } else if (authMode === "cookie") {
-      // Initialize headers with CSRF token
-      return {
-        ...(await initializeCsrfHeader(
-          defaultHeaders as Headers,
-          config,
-          logger
-        )),
-      };
-    }
+  if (authMode === "token") {
+    // Initialize headers with token-based authentication
+    return {
+      ...defaultHeaders,
+      ...(await initializeToken(defaultHeaders as Headers, config, logger)),
+    };
+  } else if (authMode === "cookie") {
+    // Initialize headers with CSRF token
+    return {
+      ...(await initializeCsrfHeader(
+        defaultHeaders as Headers,
+        config,
+        logger
+      )),
+    };
   }
 
   // Return the default headers if not using secure methods
@@ -220,7 +211,7 @@ export default defineNuxtPlugin((_nuxtApp) => {
 
     async onRequest({ options }) {
       options.headers = {
-        ...(await buildRequestHeaders(config, options, logger, user)),
+        ...(await buildRequestHeaders(config, options, logger)),
       };
     },
 
@@ -232,7 +223,7 @@ export default defineNuxtPlugin((_nuxtApp) => {
 
       if (response.status === 401) {
         if (user.value !== null) {
-          logger.warn("User session is not set or expired");
+          logger.warn("User session is not set or access token expired");
           user.value = null;
         }
 

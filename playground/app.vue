@@ -94,6 +94,8 @@ const {
   disableTwoFactorAuthentication,
   register,
   resendEmailVerification,
+  resetPassword,
+  updatePassword,
 } = useFortifyFeatures();
 
 const svg = ref(null);
@@ -106,6 +108,8 @@ const submit = async () => {
   // svg.value = await solveTwoFactorAuthenticationChallenge(formData1.value);  PASSED
   // disableTwoFactorAuthentication();    PASSED
   // await register(formData.value);  PASSED
-  await resendEmailVerification();
+  // await resendEmailVerification();  PASSED
+  // await resetPassword(formData.value.email); PASSED
+  await updatePassword(formData.value);
 };
 </script>

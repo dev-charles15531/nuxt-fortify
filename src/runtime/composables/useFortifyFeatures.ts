@@ -25,6 +25,8 @@ export interface FortifyFeatures {
   disableTwoFactorAuthentication: () => Promise<void>;
   register: (registrationCredentials: RegistrationCredentials) => Promise<void>;
   resendEmailVerification?: () => Promise<void>;
+  resetPassword?: (email: String) => Promise<void>;
+  updatePassword?: (credentials: ResetPasswordCredentials) => Promise<void>;
 }
 
 // Define the login credentials type
@@ -47,6 +49,14 @@ interface RegistrationCredentials {
   name: string;
   password: string;
   password_confirmation: string;
+}
+
+// Define the reset password credentials type
+interface ResetPasswordCredentials {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  token: string;
 }
 
 /**
@@ -378,6 +388,77 @@ export function useFortifyFeatures(): FortifyFeatures {
     }
   };
 
+  /**
+   * Sends a POST request to the server to initiate the password reset process.
+   *
+   * @param {String} email - The email address of the user whose password is to be reset.
+   * @throws {Error} If the reset password feature is not enabled in the config, or
+   * if the reset password endpoint is not set in the config.
+   * @see https://laravel.com/docs/11.x/fortify#requesting-a-password-reset-link
+   * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
+   */
+  const resetPassword = async (email: String): Promise<void> => {
+    // Check if the reset password feature is enabled in the config
+    if (!config.features?.resetPasswords) {
+      throw new Error(
+        "Reset password feature not enabled. Please enable it from config"
+      );
+    }
+
+    // Check if the reset password endpoint is set in the config
+    if (!config.endpoints?.resetPassword) {
+      throw new Error(
+        "Reset password endpoint not set. Please set this endpoint from config"
+      );
+    }
+
+    try {
+      return await api(config.endpoints.resetPassword as RequestInfo, {
+        method: "POST",
+        body: { email: email },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  /**
+   * Sends a POST request to the server to update the user's password.
+   *
+   * @param {ResetPasswordCredentials} resetPasswordCredentials - The new password and its confirmation,
+   * as well as a token that contains the value of request()->route('token').
+   * @see https://laravel.com/docs/11.x/fortify#resetting-the-password
+   * @throws {Error} If the update password feature is not enabled in the config, or
+   * if the update password endpoint is not set in the config.
+   * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
+   */
+  const updatePassword = async (
+    resetPasswordCredentials: ResetPasswordCredentials
+  ): Promise<void> => {
+    // Check if the update password feature is enabled in the config
+    if (!config.features?.updatePasswords) {
+      throw new Error(
+        "Update password feature not enabled. Please enable it from config"
+      );
+    }
+
+    // Check if the update password endpoint is set in the config
+    if (!config.endpoints?.updatePassword) {
+      throw new Error(
+        "Update password endpoint not set. Please set this endpoint from config"
+      );
+    }
+
+    try {
+      return await api(config.endpoints.updatePassword as RequestInfo, {
+        method: "POST",
+        body: resetPasswordCredentials,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return {
     isAuth,
     login,
@@ -388,5 +469,7 @@ export function useFortifyFeatures(): FortifyFeatures {
     disableTwoFactorAuthentication,
     register,
     resendEmailVerification,
+    resetPassword,
+    updatePassword,
   };
 }

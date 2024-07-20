@@ -4,14 +4,14 @@ import {
   useCookie,
   navigateTo,
   useRoute,
-  type NuxtApp,
+  useRequestURL,
+  useRequestHeaders,
 } from "#app";
 import { useFortifyIntendedRedirect } from "../composables/useFortifyIntendedRedirect";
 import { useFortifyUser } from "../composables/useFortifyUser";
 import type { BaseModuleOptions } from "../types/options";
 import { createConsola, type ConsolaInstance } from "consola";
 import type { FetchOptions } from "ofetch";
-import type { Ref } from "vue";
 
 /**
  * Creates the default fetch options for the Fortify API.
@@ -170,7 +170,7 @@ async function buildRequestHeaders(
   const authMode = config.authMode;
 
   // Default headers with common values
-  const defaultHeaders: HeadersInit = {
+  let defaultHeaders: HeadersInit = {
     ...options.headers,
     Accept: "application/json",
     Referer: origin,
@@ -184,6 +184,18 @@ async function buildRequestHeaders(
       ...(await initializeToken(defaultHeaders as Headers, config, logger)),
     };
   } else if (authMode === "cookie") {
+    let clientCookies = useRequestHeaders(["cookie"]);
+    let origin = config.origin ?? useRequestURL().origin;
+
+    if (import.meta.server) {
+      defaultHeaders = {
+        ...options.headers,
+        Accept: "application/json",
+        Referer: origin,
+        Origin: origin,
+        ...(clientCookies.cookie && clientCookies),
+      };
+    }
     // Initialize headers with CSRF token
     return {
       ...(await initializeCsrfHeader(

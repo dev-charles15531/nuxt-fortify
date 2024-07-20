@@ -68,6 +68,11 @@ export interface BaseModuleOptions {
    * The log level to use for the module.
    */
   logLevel: LogLevel;
+
+  /**
+   * The origin to use for CORS requests.
+   */
+  origin?: string;
 }
 
 export interface ApiEndpoints {
@@ -76,29 +81,85 @@ export interface ApiEndpoints {
    * @default '/sanctum/csrf-cookie'
    */
   csrf: string;
+
   /**
    * The endpoint to send user credentials to authenticate.
    * @default '/login'
    */
   login: string;
+
   /**
    * The endpoint to destroy current user session.
    * @default '/logout'
    */
   logout: string;
+
   /**
    * The endpoint to fetch current user data.
    * @default '/user'
    */
   user: string;
 
+  /**
+   * 2FA endpoints.
+   */
   tfa?: {
+    /**
+     * The endpoint to enable 2FA.
+     * @default '/user/two-factor-authentication'
+     */
     enable: string;
+    /**
+     * The endpoint to initialize 2FA QR code.
+     * @default '/user/two-factor-qr-code'
+     */
     code: string;
+    /**
+     * The endpoint to retrieve 2FA recovery codes.
+     * @default '/user/two-factor-recovery-codes'
+     */
     recoveryCode: string;
+    /**
+     * The endpoint to solve 2FA challenge.
+     * @default '/two-factor-challenge'
+     */
     challenge: string;
+    /**
+     * The endpoint to disable 2FA.
+     * @default '/user/two-factor-authenticatione'
+     */
     disable: string;
   };
+
+  /**
+   * The endpoint to send user credentials for registration.
+   * @default '/register'
+   */
+  register?: String;
+
+  /**
+   * The endpoint to send user an email containing reset password link.
+   * @default '/forgot-password'
+   */
+  resetPassword?: String;
+
+  /**
+   * The endpoint to send user credentials for a password reset.
+   * @default '/reset-password'
+   */
+  updatePassword?: String;
+
+  /**
+   * The endpoint to send user an email containing verification link.
+   * @default '/email/verification-notification'
+   */
+  resendEmailVerificationLink?: String;
+
+  /**
+   * The endpoint for user password confirmation.
+   * @default '/user/confirm-password'
+   */
+  confirmPassword?: String;
 }
 
 export interface FortifyFeatures {
@@ -106,19 +167,19 @@ export interface FortifyFeatures {
    * Whether to enable registration feature.
    * @default true
    */
-  registration: Boolean;
+  registration?: Boolean;
 
   /**
    * Whether to enable reset password feature.
    * @default true
    */
-  resetPasswords: Boolean;
+  resetPasswords?: Boolean;
 
   /**
    * Whether to enable email verification feature.
    * @default true
    */
-  emailVerification: Boolean;
+  emailVerification?: Boolean;
 
   /**
    * Whether to enable user profile update feature.

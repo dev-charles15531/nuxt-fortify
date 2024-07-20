@@ -35,6 +35,11 @@ export default defineNuxtModule<BaseModuleOptions>({
         recoveryCode: "/user/two-factor-recovery-codes",
         challenge: "/two-factor-challenge",
       },
+      register: "/register",
+      resetPassword: "/forgot-password",
+      updatePassword: "/reset-password",
+      confirmPassword: "/confirm-password",
+      resendEmailVerificationLink: "/email/verification-notification",
     },
     intendedRedirect: true,
     features: {

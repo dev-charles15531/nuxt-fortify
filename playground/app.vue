@@ -1,5 +1,14 @@
 <template>
   <div>
+    <br />
+    <div>
+      <input type="text" placeholder="Firstname" v-model="formData.firstname" />
+    </div>
+    <br />
+    <div>
+      <input type="text" placeholder="Lastname" v-model="formData.lastname" />
+    </div>
+    <br />
     <div>
       <input
         type="email"
@@ -10,11 +19,27 @@
     </div>
     <br />
     <div>
+      <input type="text" placeholder="phone" v-model="formData.phone" />
+    </div>
+    <br />
+    <div>
       <input
         type="password"
         placeholder="password"
         v-model="formData.password"
       />
+    </div>
+    <br />
+    <div>
+      <input
+        type="password"
+        placeholder="password confirmation"
+        v-model="formData.password_confirmation"
+      />
+    </div>
+    <br />
+    <div>
+      <input type="text" placeholder="token" v-model="formData.token" />
     </div>
     <br />
     <div>
@@ -47,8 +72,13 @@
 
 <script setup>
 const formData = ref({
+  firstname: null,
+  lastname: null,
   email: null,
+  phone: null,
   password: null,
+  password_confirmation: null,
+  token: null,
   code: null,
 });
 const formData1 = ref({
@@ -56,24 +86,24 @@ const formData1 = ref({
 });
 const {
   login,
+  isAuth,
   enableTwoFactorAuthentication,
   getTwoFactorAuthenticationQRCode,
-  isAuth,
   showTwoFactorAuthenticationRecoveryCodes,
   solveTwoFactorAuthenticationChallenge,
   disableTwoFactorAuthentication,
+  register,
 } = useFortifyFeatures();
 
-const user = useFortifyUser();
 const svg = ref(null);
 
 const submit = async () => {
-  // await login(formData.value);
-  console.log(isAuth.value);
-
-  svg.value = await solveTwoFactorAuthenticationChallenge(formData1.value);
-  // svg.value = await showTwoFactorAuthenticationRecoveryCodes();
-  // disableTwoFactorAuthentication();
-  // enableTwoFactorAuthentication();
+  // await login(formData.value); PASSED
+  // enableTwoFactorAuthentication();     PASSED
+  // getTwoFactorAuthenticationQRCode();  PASSED
+  // svg.value = await showTwoFactorAuthenticationRecoveryCodes();  PASSED
+  // svg.value = await solveTwoFactorAuthenticationChallenge(formData1.value);  PASSED
+  // disableTwoFactorAuthentication();    PASSED
+  await register(formData.value);
 };
 </script>

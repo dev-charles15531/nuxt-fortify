@@ -8,6 +8,7 @@ export default defineNuxtConfig({
       resetPasswords: true,
       emailVerification: true,
       twoFactorAuthentication: true,
+      updatePasswords: true,
     },
     tfaAfterLogin: true,
   },

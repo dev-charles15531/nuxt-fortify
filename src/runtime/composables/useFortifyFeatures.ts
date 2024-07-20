@@ -24,6 +24,7 @@ export interface FortifyFeatures {
   ) => Promise<void>;
   disableTwoFactorAuthentication: () => Promise<void>;
   register: (registrationCredentials: RegistrationCredentials) => Promise<void>;
+  resendEmailVerification?: () => Promise<void>;
 }
 
 // Define the login credentials type
@@ -342,6 +343,41 @@ export function useFortifyFeatures(): FortifyFeatures {
     }
   };
 
+  /**
+   * Resends the email verification link to the user.
+   *
+   * @throws {Error} If the email verification feature is not enabled in the config, or
+   * if the resend email verification link endpoint is not set in the config.
+   * @see https://laravel.com/docs/11.x/fortify#resending-email-verification-links
+   * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
+   */
+  const resendEmailVerification = async (): Promise<void> => {
+    // Check if the email verification feature is enabled in the config
+    if (!config.features?.emailVerification) {
+      throw new Error(
+        "Email verification feature not enabled. Please enable it from config"
+      );
+    }
+
+    // Check if the "resend email verification link" endpoint is set in the config
+    if (!config.endpoints?.resendEmailVerificationLink) {
+      throw new Error(
+        "The resend email verification link endpoint not set. Please set this endpoint from config"
+      );
+    }
+
+    try {
+      return await api(
+        config.endpoints.resendEmailVerificationLink as RequestInfo,
+        {
+          method: "POST",
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return {
     isAuth,
     login,
@@ -351,5 +387,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     solveTwoFactorAuthenticationChallenge,
     disableTwoFactorAuthentication,
     register,
+    resendEmailVerification,
   };
 }

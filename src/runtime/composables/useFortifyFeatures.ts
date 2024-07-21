@@ -24,9 +24,10 @@ export interface FortifyFeatures {
   ) => Promise<void>;
   disableTwoFactorAuthentication: () => Promise<void>;
   register: (registrationCredentials: RegistrationCredentials) => Promise<void>;
-  resendEmailVerification?: () => Promise<void>;
-  resetPassword?: (email: String) => Promise<void>;
-  updatePassword?: (credentials: ResetPasswordCredentials) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
+  resetPassword: (email: String) => Promise<void>;
+  updatePassword: (credentials: ResetPasswordCredentials) => Promise<void>;
+  confirmPassword: (password: String) => Promise<void>;
 }
 
 // Define the login credentials type
@@ -459,6 +460,32 @@ export function useFortifyFeatures(): FortifyFeatures {
     }
   };
 
+  /**
+   * Confirms the user's password.
+   *
+   * @param password - The user's password to confirm.
+   * @throws {Error} If the confirm password endpoint is not set in the config.
+   * @see https://laravel.com/docs/11.x/fortify#password-confirmation
+   * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
+   */
+  const confirmPassword = async (password: String): Promise<void> => {
+    // Check if the confirm password endpoint is set in the config
+    if (!config.endpoints?.confirmPassword) {
+      throw new Error(
+        "Confirm password endpoint not set. Please set this endpoint from config"
+      );
+    }
+
+    try {
+      return await api(config.endpoints.confirmPassword as RequestInfo, {
+        method: "POST",
+        body: { password: password },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return {
     isAuth,
     login,
@@ -471,5 +498,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     resendEmailVerification,
     resetPassword,
     updatePassword,
+    confirmPassword,
   };
 }

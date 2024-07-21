@@ -96,6 +96,7 @@ const {
   resendEmailVerification,
   resetPassword,
   updatePassword,
+  confirmPassword,
 } = useFortifyFeatures();
 
 const svg = ref(null);
@@ -110,6 +111,7 @@ const submit = async () => {
   // await register(formData.value);  PASSED
   // await resendEmailVerification();  PASSED
   // await resetPassword(formData.value.email); PASSED
-  await updatePassword(formData.value);
+  // await updatePassword(formData.value);  PASSED
+  await confirmPassword(formData.value.password);
 };
 </script>

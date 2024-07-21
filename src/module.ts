@@ -38,7 +38,7 @@ export default defineNuxtModule<BaseModuleOptions>({
       register: "/register",
       resetPassword: "/forgot-password",
       updatePassword: "/reset-password",
-      confirmPassword: "/confirm-password",
+      confirmPassword: "/user/confirm-password",
       resendEmailVerificationLink: "/email/verification-notification",
     },
     intendedRedirect: true,

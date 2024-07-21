@@ -1,5 +1,5 @@
-import { useNuxtApp } from "#app";
-import type { $Fetch } from "ofetch";
+import type { $Fetch } from 'ofetch'
+import { useNuxtApp } from '#app'
 
 /**
  * Returns a reference to the $fortifyApi property of the nuxt runtime app.
@@ -9,7 +9,7 @@ import type { $Fetch } from "ofetch";
  * @returns {$Fetch} A reference to the $fortifyApi property of the nuxt runtime app.
  */
 export const useApi = (): $Fetch => {
-  const api = useNuxtApp().$fortifyApi;
+  const api = useNuxtApp().$fortifyApi
 
-  return api as $Fetch;
-};
+  return api as $Fetch
+}

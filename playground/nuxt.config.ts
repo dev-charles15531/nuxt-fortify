@@ -1,8 +1,8 @@
 export default defineNuxtConfig({
-  modules: ["../src/module"],
+  modules: ['../src/module'],
   nuxtFortify: {
-    baseUrl: "http://localhost:80/api",
-    authMode: "token",
+    baseUrl: 'http://localhost:80/api',
+    authMode: 'token',
     features: {
       registration: true,
       resetPasswords: true,
@@ -13,5 +13,5 @@ export default defineNuxtConfig({
     tfaAfterLogin: true,
   },
   devtools: { enabled: true },
-  compatibilityDate: "2024-07-14",
-});
+  compatibilityDate: '2024-07-14',
+})

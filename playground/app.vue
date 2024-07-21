@@ -1,68 +1,86 @@
 <template>
   <div>
-    <br />
-    <div>
-      <input type="text" placeholder="Firstname" v-model="formData.firstname" />
-    </div>
-    <br />
-    <div>
-      <input type="text" placeholder="Lastname" v-model="formData.lastname" />
-    </div>
-    <br />
+    <br>
     <div>
       <input
+        v-model="formData.firstname"
+        type="text"
+        placeholder="Firstname"
+      >
+    </div>
+    <br>
+    <div>
+      <input
+        v-model="formData.lastname"
+        type="text"
+        placeholder="Lastname"
+      >
+    </div>
+    <br>
+    <div>
+      <input
+        v-model="formData.email"
         type="email"
         placeholder="email"
         name="email"
-        v-model="formData.email"
-      />
+      >
     </div>
-    <br />
-    <div>
-      <input type="text" placeholder="phone" v-model="formData.phone" />
-    </div>
-    <br />
+    <br>
     <div>
       <input
+        v-model="formData.phone"
+        type="text"
+        placeholder="phone"
+      >
+    </div>
+    <br>
+    <div>
+      <input
+        v-model="formData.password"
         type="password"
         placeholder="password"
-        v-model="formData.password"
-      />
+      >
     </div>
-    <br />
+    <br>
     <div>
       <input
+        v-model="formData.password_confirmation"
         type="password"
         placeholder="password confirmation"
-        v-model="formData.password_confirmation"
-      />
+      >
     </div>
-    <br />
-    <div>
-      <input type="text" placeholder="token" v-model="formData.token" />
-    </div>
-    <br />
+    <br>
     <div>
       <input
+        v-model="formData.token"
+        type="text"
+        placeholder="token"
+      >
+    </div>
+    <br>
+    <div>
+      <input
+        v-model="formData.code"
         type="text"
         placeholder="code"
         name="code"
-        v-model="formData.code"
-      />
+      >
     </div>
-    <br />
+    <br>
     <div>
       <input
+        v-model="formData1.recovery_code"
         type="text"
         placeholder="r-code"
         name="r-code"
-        v-model="formData1.recovery_code"
-      />
+      >
     </div>
 
-    <br />
+    <br>
 
-    <button @click="submit">Login</button>
+    <button @click="submit">
+      Login
+    </button>
 
     <div v-if="svg">
       {{ svg }}
@@ -80,26 +98,26 @@ const formData = ref({
   password_confirmation: null,
   token: null,
   code: null,
-});
+})
 const formData1 = ref({
   recovery_code: null,
-});
+})
 const {
-  login,
-  isAuth,
-  enableTwoFactorAuthentication,
-  getTwoFactorAuthenticationQRCode,
-  showTwoFactorAuthenticationRecoveryCodes,
-  solveTwoFactorAuthenticationChallenge,
-  disableTwoFactorAuthentication,
-  register,
-  resendEmailVerification,
-  resetPassword,
-  updatePassword,
+  // login,
+  // isAuth,
+  // enableTwoFactorAuthentication,
+  // getTwoFactorAuthenticationQRCode,
+  // showTwoFactorAuthenticationRecoveryCodes,
+  // solveTwoFactorAuthenticationChallenge,
+  // disableTwoFactorAuthentication,
+  // register,
+  // resendEmailVerification,
+  // resetPassword,
+  // updatePassword,
   confirmPassword,
-} = useFortifyFeatures();
+} = useFortifyFeatures()
 
-const svg = ref(null);
+const svg = ref(null)
 
 const submit = async () => {
   // await login(formData.value); PASSED
@@ -112,6 +130,6 @@ const submit = async () => {
   // await resendEmailVerification();  PASSED
   // await resetPassword(formData.value.email); PASSED
   // await updatePassword(formData.value);  PASSED
-  await confirmPassword(formData.value.password);
-};
+  await confirmPassword(formData.value.password)
+}
 </script>

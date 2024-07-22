@@ -2,6 +2,7 @@ import { createConsola, type ConsolaInstance } from 'consola'
 import type { FetchOptions } from 'ofetch'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
 import { useFortifyUser } from '../composables/useFortifyUser'
+import { useTokenStorage } from '../composables/useTokenStorage'
 import type { BaseModuleOptions } from '../types/options'
 import {
   defineNuxtPlugin,
@@ -41,6 +42,36 @@ function buildFetchOptions(config: BaseModuleOptions): FetchOptions {
   }
 
   return options
+}
+
+/**
+ * Fetches the user details.
+ *
+ * @param {BaseModuleOptions} config - The module configuration.
+ * @param {string} token - The authentication token.
+ * @returns {Promise<void>} - A Promise that resolves when the user details are fetched.
+ */
+async function fetchUser(
+  config: BaseModuleOptions,
+  token: string,
+): Promise<void> {
+  if (config.authMode === 'token') {
+    try {
+      await $fetch(config.endpoints.user, {
+        baseURL: config.baseUrl,
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Referer: origin,
+          Origin: origin,
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
 }
 
 /**
@@ -117,24 +148,25 @@ async function initializeToken(
   config: BaseModuleOptions,
   logger: ConsolaInstance,
 ): Promise<HeadersInit> {
-  const token = useCookie(config.tokenStorageKey, { secure: true })
+  const cookieToken = useTokenStorage()
+  const token = useCookie(config.tokenStorageKey, { secure: true }).value || cookieToken.value
   const user = useFortifyUser()
 
-  if (!token.value) {
+  if (!token) {
     logger.warn(`Token not found`)
 
     return headers
   }
 
   // If the token is present but the user is not present, fetch the user details
-  if (token.value && !user.value) {
+  if (token && !user.value) {
     try {
       user.value = await $fetch(config.endpoints.user, {
         baseURL: config.baseUrl,
         method: 'POST',
         headers: {
           ...headers,
-          Authorization: `Bearer ${token.value}`,
+          Authorization: `Bearer ${token}`,
         },
       })
     }
@@ -145,7 +177,9 @@ async function initializeToken(
 
   if (!user.value) {
     logger.warn(`Token is not valid, unable to set Authorization header`)
-    token.value = null
+    // setting token to null
+    const oldToken = useCookie(config.tokenStorageKey, { secure: true })
+    oldToken.value = null
 
     return headers
   }
@@ -153,7 +187,7 @@ async function initializeToken(
   // Return the modified headers with the Authorization header set to the token
   return {
     ...headers,
-    Authorization: `Bearer ${token.value}`,
+    Authorization: `Bearer ${token}`,
   }
 }
 
@@ -228,6 +262,32 @@ export default defineNuxtPlugin((_nuxtApp) => {
     async onRequest({ options }) {
       options.headers = {
         ...(await buildRequestHeaders(config, options, logger)),
+      }
+    },
+
+    async onResponse({ response }) {
+      if (response.ok) {
+        const responseUrl = new URL(response.url)
+        const formattedResponseUrl = `${responseUrl.protocol}//${responseUrl.hostname}${responseUrl.pathname}`
+
+        const configLoginUrl = new URL(config.baseUrl + config.endpoints.login)
+        const formattedConfiLogingUrl = `${configLoginUrl.protocol}//${configLoginUrl.hostname}${configLoginUrl.pathname}`
+
+        if (formattedResponseUrl === formattedConfiLogingUrl) {
+          const cookieToken = useTokenStorage()
+
+          const token = response._data.token
+
+          // set the auth token if auth mode is token
+          if (config.authMode === 'token') {
+            const storedToken = useCookie(config.tokenStorageKey, { secure: true })
+            storedToken.value = token
+            cookieToken.value = token
+          }
+
+          // initialize authenticated user
+          user.value = await fetchUser(config, token as string)
+        }
       }
     },
 

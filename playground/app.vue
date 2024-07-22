@@ -103,33 +103,34 @@ const formData1 = ref({
   recovery_code: null,
 })
 const {
-  // login,
-  // isAuth,
-  // enableTwoFactorAuthentication,
-  // getTwoFactorAuthenticationQRCode,
-  // showTwoFactorAuthenticationRecoveryCodes,
-  // solveTwoFactorAuthenticationChallenge,
-  // disableTwoFactorAuthentication,
-  // register,
-  // resendEmailVerification,
-  // resetPassword,
-  // updatePassword,
+  login,
+  isAuth,
+  enableTwoFactorAuthentication,
+  getTwoFactorAuthenticationQRCode,
+  showTwoFactorAuthenticationRecoveryCodes,
+  solveTwoFactorAuthenticationChallenge,
+  disableTwoFactorAuthentication,
+  register,
+  resendEmailVerification,
+  resetPassword,
+  updatePassword,
   confirmPassword,
 } = useFortifyFeatures()
 
 const svg = ref(null)
 
 const submit = async () => {
-  // await login(formData.value); PASSED
+  console.log(isAuth.value)
+  // await login(formData.value)
   // enableTwoFactorAuthentication();     PASSED
   // getTwoFactorAuthenticationQRCode();  PASSED
   // svg.value = await showTwoFactorAuthenticationRecoveryCodes();  PASSED
   // svg.value = await solveTwoFactorAuthenticationChallenge(formData1.value);  PASSED
-  // disableTwoFactorAuthentication();    PASSED
+  // disableTwoFactorAuthentication()
   // await register(formData.value);  PASSED
-  // await resendEmailVerification();  PASSED
+  // await resendEmailVerification();  
   // await resetPassword(formData.value.email); PASSED
   // await updatePassword(formData.value);  PASSED
-  await confirmPassword(formData.value.password)
+  // await confirmPassword(formData.value.password)
 }
 </script>

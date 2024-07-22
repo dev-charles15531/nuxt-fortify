@@ -7,7 +7,6 @@ import { useApi } from './useApi'
 import { useFortifyIntendedRedirect } from './useFortifyIntendedRedirect'
 import {
   navigateTo,
-  useCookie,
   useNuxtApp,
   useRoute,
   useRuntimeConfig,
@@ -69,7 +68,6 @@ export function useFortifyFeatures(): FortifyFeatures {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
   const nuxtApp = useNuxtApp()
   const api = useApi()
-  const user = useFortifyUser()
   const logger = createConsola({ level: config.logLevel }).withTag(
     'nuxt-fortify',
   )
@@ -78,30 +76,6 @@ export function useFortifyFeatures(): FortifyFeatures {
   const isAuth = computed(() => {
     return useFortifyUser().value !== null
   })
-
-  /**
-   * Initializes the user object based on the authentication mode.
-   *
-   * @param token - The authentication token.
-   */
-  async function initAuthUser(token: string) {
-    // If the authentication mode is "token", make a POST request to the user endpoint
-    // with the authorization header set to the token.
-    if (config.authMode === 'token') {
-      user.value = await $fetch(config.endpoints.user, {
-        baseURL: config.baseUrl,
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`, // Set the authorization header to the token
-        },
-      })
-    }
-    // If the authentication mode is "cookie", make a POST request to the user endpoint.
-    else if (config.authMode === 'cookie') {
-      user.value = await api(config.endpoints.user, { method: 'POST' })
-    }
-  }
 
   /**
    * Logs in the user with the provided credentials.
@@ -128,14 +102,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     })
       .then(async (response) => {
         if (response.status === 200 || response.token) {
-          // set the auth token if auth mode is token
-          if (config.authMode === 'token') {
-            const token = useCookie(config.tokenStorageKey, { secure: true })
-            token.value = response.token
-          }
-
-          await initAuthUser(response.token)
-
           // redirect to 2fa page if configured
           if (config.tfaAfterLogin) {
             if (config.tfaRoute) {

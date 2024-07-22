@@ -8,7 +8,13 @@ import {
 import { defu } from 'defu'
 import type { BaseModuleOptions } from './runtime/types/options'
 
-export default defineNuxtModule<BaseModuleOptions>({
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+}
+
+export type ModuleOptions = DeepPartial<BaseModuleOptions>
+
+export default defineNuxtModule <ModuleOptions>({
   meta: {
     name: 'nuxt-fortify',
     configKey: 'nuxtFortify',
@@ -16,12 +22,11 @@ export default defineNuxtModule<BaseModuleOptions>({
   // Default configuration options of the Nuxt module
   defaults: {
     baseUrl: 'http://localhost:3000/api',
-    loginRoute: '/login',
-    logLevel: 1,
-    authHome: '/home',
     authMode: 'cookie',
-    cookieHeader: 'X-XSRF-TOKEN',
+    loginRoute: '/login',
+    authHome: '/home',
     cookieKey: 'XSRF-TOKEN',
+    cookieHeader: 'X-XSRF-TOKEN',
     tokenStorageKey: 'API-TOKEN',
     endpoints: {
       csrf: '/sanctum/csrf-cookie',
@@ -49,6 +54,8 @@ export default defineNuxtModule<BaseModuleOptions>({
     },
     tfaAfterLogin: false,
     tfaRoute: '/two-factor-authentication',
+    logLevel: 1,
+    origin: 'http://localhost:3000',
   },
   async setup(_options, _nuxt) {
     const resolver = createResolver(import.meta.url)

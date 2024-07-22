@@ -103,18 +103,18 @@ const formData1 = ref({
   recovery_code: null,
 })
 const {
-  login,
+  // login,
   isAuth,
-  enableTwoFactorAuthentication,
-  getTwoFactorAuthenticationQRCode,
-  showTwoFactorAuthenticationRecoveryCodes,
-  solveTwoFactorAuthenticationChallenge,
-  disableTwoFactorAuthentication,
-  register,
-  resendEmailVerification,
-  resetPassword,
-  updatePassword,
-  confirmPassword,
+  // enableTwoFactorAuthentication,
+  // getTwoFactorAuthenticationQRCode,
+  // showTwoFactorAuthenticationRecoveryCodes,
+  // solveTwoFactorAuthenticationChallenge,
+  // disableTwoFactorAuthentication,
+  // register,
+  // resendEmailVerification,
+  // resetPassword,
+  // updatePassword,
+  // confirmPassword,
 } = useFortifyFeatures()
 
 const svg = ref(null)
@@ -131,6 +131,6 @@ const submit = async () => {
   // await resendEmailVerification()
   // await resetPassword(formData.value.email); PASSED
   // await updatePassword(formData.value);  PASSED
-  await confirmPassword(formData.value.password)
+  // await confirmPassword(formData.value.password)
 }
 </script>

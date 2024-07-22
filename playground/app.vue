@@ -122,15 +122,15 @@ const svg = ref(null)
 const submit = async () => {
   console.log(isAuth.value)
   // await login(formData.value)
-  // enableTwoFactorAuthentication();     PASSED
+  // enableTwoFactorAuthentication()
   // getTwoFactorAuthenticationQRCode();  PASSED
   // svg.value = await showTwoFactorAuthenticationRecoveryCodes();  PASSED
   // svg.value = await solveTwoFactorAuthenticationChallenge(formData1.value);  PASSED
   // disableTwoFactorAuthentication()
   // await register(formData.value);  PASSED
-  // await resendEmailVerification();  
+  // await resendEmailVerification()
   // await resetPassword(formData.value.email); PASSED
   // await updatePassword(formData.value);  PASSED
-  // await confirmPassword(formData.value.password)
+  await confirmPassword(formData.value.password)
 }
 </script>

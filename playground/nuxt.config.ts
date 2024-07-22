@@ -1,8 +1,8 @@
 export default defineNuxtConfig({
   modules: ['../src/module'],
   nuxtFortify: {
-    baseUrl: 'http://localhost:80/api',
-    authMode: 'token',
+    baseUrl: 'http://localhost:80',
+    authMode: 'cookie',
     features: {
       registration: true,
       resetPasswords: true,
@@ -11,6 +11,24 @@ export default defineNuxtConfig({
       updatePasswords: true,
     },
     tfaAfterLogin: true,
+    endpoints: {
+      csrf: '/sanctum/csrf-cookie',
+      login: '/api/login',
+      logout: '/api/logout',
+      user: '/api/user',
+      tfa: {
+        enable: '/api/user/two-factor-authentication',
+        disable: '/api/user/two-factor-authentication',
+        code: '/api/user/two-factor-qr-code',
+        recoveryCode: '/api/user/two-factor-recovery-codes',
+        challenge: '/api/two-factor-challenge',
+      },
+      register: '/api/register',
+      resetPassword: '/api/forgot-password',
+      updatePassword: '/api/reset-password',
+      confirmPassword: '/api/user/confirm-password',
+      resendEmailVerificationLink: '/api/email/verification-notification',
+    },
   },
   devtools: { enabled: true },
   compatibilityDate: '2024-07-14',

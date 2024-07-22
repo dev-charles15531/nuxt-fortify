@@ -3,6 +3,7 @@ import type { FetchOptions } from 'ofetch'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
 import { useFortifyUser } from '../composables/useFortifyUser'
 import { useTokenStorage } from '../composables/useTokenStorage'
+import { useApi } from '../composables/useApi'
 import type { BaseModuleOptions } from '../types/options'
 import {
   defineNuxtPlugin,
@@ -71,6 +72,10 @@ async function fetchUser(
     catch (error) {
       console.log(error)
     }
+  }
+  else if (config.authMode === 'cookie') {
+    const api = useApi()
+    await api(config.endpoints.user, { method: 'POST' })
   }
 }
 

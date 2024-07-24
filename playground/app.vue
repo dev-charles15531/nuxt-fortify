@@ -103,7 +103,7 @@ const formData1 = ref({
   recovery_code: null,
 })
 const {
-  // login,
+  login,
   isAuth,
   // enableTwoFactorAuthentication,
   // getTwoFactorAuthenticationQRCode,
@@ -121,7 +121,7 @@ const svg = ref(null)
 
 const submit = async () => {
   console.log(isAuth.value)
-  // await login(formData.value)
+  await login(formData.value)
   // enableTwoFactorAuthentication()
   // getTwoFactorAuthenticationQRCode();  PASSED
   // svg.value = await showTwoFactorAuthenticationRecoveryCodes();  PASSED

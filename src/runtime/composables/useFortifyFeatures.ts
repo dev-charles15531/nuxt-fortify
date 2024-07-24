@@ -1,6 +1,5 @@
 import { type Ref, computed } from 'vue'
 import type { RouteLocationNormalized } from 'vue-router'
-import { createConsola } from 'consola'
 import type { BaseModuleOptions } from '../types/options'
 import { useFortifyUser } from './useFortifyUser'
 import { useApi } from './useApi'
@@ -68,13 +67,11 @@ export function useFortifyFeatures(): FortifyFeatures {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
   const nuxtApp = useNuxtApp()
   const api = useApi()
-  const logger = createConsola({ level: config.logLevel }).withTag(
-    'nuxt-fortify',
-  )
 
   // determine if the user is authenticated
   const isAuth = computed(() => {
-    return useFortifyUser().value !== null
+    const { user } = useFortifyUser()
+    return user.value !== null
   })
 
   /**
@@ -101,35 +98,36 @@ export function useFortifyFeatures(): FortifyFeatures {
       body: credentials,
     })
       .then(async (response) => {
-        if (response.status === 200 || response.token) {
+        if (response.two_factor) {
           // redirect to 2fa page if configured
-          if (config.tfaAfterLogin) {
-            if (config.tfaRoute) {
-              return await nuxtApp.runWithContext(() =>
-                navigateTo(config.tfaRoute),
-              )
-            }
-            else {
-              logger.error('tfaRoute is not configured, redirecting ...')
-            }
-          }
-          // redirect to intended route
-          else if (config.authHome) {
-            const intendedRoute: Ref<RouteLocationNormalized | null>
-              = useFortifyIntendedRedirect()
-            if (config.intendedRedirect && intendedRoute.value) {
-              return await nuxtApp.runWithContext(() =>
-                navigateTo({
-                  path: intendedRoute.value?.path,
-                  query: intendedRoute.value?.query,
-                }),
-              )
-            }
-
+          if (config.tfaRoute) {
             return await nuxtApp.runWithContext(() =>
-              navigateTo(config.authHome),
+              navigateTo(config.tfaRoute),
             )
           }
+          else {
+            console.log('tfaRoute is not configured, redirecting ...')
+          }
+        }
+
+        if (config.authHome) {
+          const intendedRoute: Ref<RouteLocationNormalized | null>
+            = useFortifyIntendedRedirect()
+          if (config.intendedRedirect && intendedRoute.value) {
+            return await nuxtApp.runWithContext(() =>
+              navigateTo({
+                path: intendedRoute.value?.path,
+                query: intendedRoute.value?.query,
+              }),
+            )
+          }
+
+          return await nuxtApp.runWithContext(() =>
+            navigateTo(config.authHome),
+          )
+        }
+        else {
+          console.log('auth home is not configured')
         }
       })
       .catch((error) => {

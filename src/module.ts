@@ -4,6 +4,7 @@ import {
   addImportsDir,
   createResolver,
   useLogger,
+  addRouteMiddleware,
 } from '@nuxt/kit'
 import { defu } from 'defu'
 import type { BaseModuleOptions } from './runtime/types/options'
@@ -57,7 +58,7 @@ export default defineNuxtModule <ModuleOptions>({
     logLevel: 1,
     origin: 'http://localhost:3000',
   },
-  async setup(_options, _nuxt) {
+  setup(_options, _nuxt) {
     const resolver = createResolver(import.meta.url)
 
     const runtimeDir = resolver.resolve('./runtime')
@@ -78,5 +79,15 @@ export default defineNuxtModule <ModuleOptions>({
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolver.resolve('./runtime/plugins/fortifyApi'))
     addImportsDir(resolver.resolve('./runtime/composables'))
+
+    // Add middlewares
+    addRouteMiddleware({
+      name: 'fortify:auth',
+      path: resolver.resolve('./runtime/middleware/nuxt-fortify.auth'),
+    })
+    addRouteMiddleware({
+      name: 'fortify:guest',
+      path: resolver.resolve('./runtime/middleware/nuxt-fortify.guest'),
+    })
   },
 })

@@ -3,7 +3,6 @@ import type { FetchOptions } from 'ofetch'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
 import { useFortifyUser } from '../composables/useFortifyUser'
 import { useTokenStorage } from '../composables/useTokenStorage'
-import { useApi } from '../composables/useApi'
 import type { BaseModuleOptions } from '../types/options'
 import {
   defineNuxtPlugin,
@@ -43,40 +42,6 @@ function buildFetchOptions(config: BaseModuleOptions): FetchOptions {
   }
 
   return options
-}
-
-/**
- * Fetches the user details.
- *
- * @param {BaseModuleOptions} config - The module configuration.
- * @param {string} token - The authentication token.
- * @returns {Promise<void>} - A Promise that resolves when the user details are fetched.
- */
-async function fetchUser(
-  config: BaseModuleOptions,
-  token: string,
-): Promise<void> {
-  if (config.authMode === 'token') {
-    try {
-      await $fetch(config.endpoints.user, {
-        baseURL: config.baseUrl,
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Referer: origin,
-          Origin: origin,
-          Authorization: `Bearer ${token}`,
-        },
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
-  }
-  else if (config.authMode === 'cookie') {
-    const api = useApi()
-    await api(config.endpoints.user, { method: 'POST' })
-  }
 }
 
 /**
@@ -155,36 +120,9 @@ async function initializeToken(
 ): Promise<HeadersInit> {
   const cookieToken = useTokenStorage()
   const token = useCookie(config.tokenStorageKey, { secure: true }).value || cookieToken.value
-  const user = useFortifyUser()
 
   if (!token) {
     logger.warn(`Token not found`)
-
-    return headers
-  }
-
-  // If the token is present but the user is not present, fetch the user details
-  if (token && !user.value) {
-    try {
-      user.value = await $fetch(config.endpoints.user, {
-        baseURL: config.baseUrl,
-        method: 'POST',
-        headers: {
-          ...headers,
-          Authorization: `Bearer ${token}`,
-        },
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
-  }
-
-  if (!user.value) {
-    logger.warn(`Token is not valid, unable to set Authorization header`)
-    // setting token to null
-    const oldToken = useCookie(config.tokenStorageKey, { secure: true })
-    oldToken.value = null
 
     return headers
   }
@@ -255,11 +193,10 @@ async function buildRequestHeaders(
 
 export default defineNuxtPlugin((_nuxtApp) => {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
-  const user = useFortifyUser()
+  const { user } = useFortifyUser()
   const logger = createConsola({ level: config.logLevel }).withTag(
     'nuxt-fortify',
   )
-  const route = useRoute()
 
   const $customFetch = $fetch.create({
     ...buildFetchOptions(config),
@@ -279,18 +216,20 @@ export default defineNuxtPlugin((_nuxtApp) => {
         const formattedConfiLogingUrl = `${configLoginUrl.protocol}//${configLoginUrl.hostname}${configLoginUrl.pathname}`
 
         if (formattedResponseUrl === formattedConfiLogingUrl) {
-          const cookieToken = useTokenStorage()
-
-          const token = response._data.token
+          let token = ''
 
           // set the auth token if auth mode is token
           if (config.authMode === 'token') {
+            token = response._data.token
+
+            const cookieToken = useTokenStorage()
             const storedToken = useCookie(config.tokenStorageKey, { secure: true })
             storedToken.value = token
             cookieToken.value = token
           }
 
           // initialize authenticated user
+          const { fetchUser } = useFortifyUser()
           user.value = await fetchUser(config, token as string)
         }
       }
@@ -303,12 +242,19 @@ export default defineNuxtPlugin((_nuxtApp) => {
       }
 
       if (response.status === 401) {
+        logger.warn('User session is not set or access token expired')
+
+        if (config.authMode === 'token') {
+          const oldToken = useCookie(config.tokenStorageKey, { secure: true })
+          oldToken.value = null
+        }
         if (user.value !== null) {
-          logger.warn('User session is not set or access token expired')
           user.value = null
         }
 
         if (import.meta.client && config.loginRoute) {
+          const route = useRoute()
+
           // save current route to be able to redirect to it after login
           if (config.intendedRedirect) {
             const intendedRoute = useFortifyIntendedRedirect()

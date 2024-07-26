@@ -1,19 +1,36 @@
-import { type Ref, computed } from 'vue'
-import type { RouteLocationNormalized } from 'vue-router'
+import { type Ref, computed, reactive } from 'vue'
+import type { FetchResponse } from 'ofetch'
 import type { BaseModuleOptions } from '../types/options'
 import { useFortifyUser } from './useFortifyUser'
 import { useApi } from './useApi'
 import { useFortifyIntendedRedirect } from './useFortifyIntendedRedirect'
 import {
   navigateTo,
+  useCookie,
   useNuxtApp,
   useRoute,
   useRuntimeConfig,
+  useTokenStorage,
 } from '#imports'
+
+interface FortifyError {
+  login: FetchResponse<unknown> | null
+  enableTwoFactorAuthentication: FetchResponse<unknown> | null
+  getTwoFactorAuthenticationQRCode: FetchResponse<unknown> | null
+  showTwoFactorAuthenticationRecoveryCodes: FetchResponse<unknown> | null
+  solveTwoFactorAuthenticationChallenge: FetchResponse<unknown> | null
+  register: FetchResponse<unknown> | null
+  resendEmailVerification: FetchResponse<unknown> | null
+  resetPassword: FetchResponse<unknown> | null
+  updatePassword: FetchResponse<unknown> | null
+  confirmPassword: FetchResponse<unknown> | null
+}
 
 export interface FortifyFeatures {
   isAuth: Ref<boolean>
+  error: FortifyError
   login: (credentials: Credentials) => Promise<void>
+  logout: () => Promise<void>
   enableTwoFactorAuthentication: () => Promise<void>
   getTwoFactorAuthenticationQRCode: () => Promise<void>
   showTwoFactorAuthenticationRecoveryCodes: () => Promise<void>
@@ -61,12 +78,25 @@ interface ResetPasswordCredentials {
 /**
  * This function initializes and returns the fortify features.
  *
- * @returns An object containing the ref for fortify and the computed property for fortified.
+ * @returns features.
  */
 export function useFortifyFeatures(): FortifyFeatures {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
   const nuxtApp = useNuxtApp()
   const api = useApi()
+
+  const error: FortifyError = reactive({
+    login: null,
+    enableTwoFactorAuthentication: null,
+    getTwoFactorAuthenticationQRCode: null,
+    showTwoFactorAuthenticationRecoveryCodes: null,
+    solveTwoFactorAuthenticationChallenge: null,
+    register: null,
+    resendEmailVerification: null,
+    resetPassword: null,
+    updatePassword: null,
+    confirmPassword: null,
+  })
 
   // determine if the user is authenticated
   const isAuth = computed(() => {
@@ -79,8 +109,10 @@ export function useFortifyFeatures(): FortifyFeatures {
    *
    * @param credentials - The user credentials.
    */
-  async function login(credentials: Credentials) {
+  const login = async (credentials: Credentials) => {
     const currentRoute = useRoute()
+    const { refreshUser } = useFortifyUser()
+    await refreshUser()
 
     if (isAuth.value === true) {
       if (config.authHome === undefined) {
@@ -91,6 +123,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       }
 
       await nuxtApp.runWithContext(() => navigateTo(config.authHome))
+      return
     }
 
     await api(config.endpoints.login, {
@@ -106,19 +139,17 @@ export function useFortifyFeatures(): FortifyFeatures {
             )
           }
           else {
-            console.log('tfaRoute is not configured, redirecting ...')
+            console.log('Module tfaRoute is not configured.')
+            return
           }
         }
 
         if (config.authHome) {
-          const intendedRoute: Ref<RouteLocationNormalized | null>
+          const intendedRoute
             = useFortifyIntendedRedirect()
           if (config.intendedRedirect && intendedRoute.value) {
             return await nuxtApp.runWithContext(() =>
-              navigateTo({
-                path: intendedRoute.value?.path,
-                query: intendedRoute.value?.query,
-              }),
+              navigateTo(intendedRoute.value),
             )
           }
 
@@ -128,11 +159,40 @@ export function useFortifyFeatures(): FortifyFeatures {
         }
         else {
           console.log('auth home is not configured')
+          return
         }
       })
-      .catch((error) => {
-        console.log(error)
+      .catch(({ response }) => {
+        console.log(response)
+        error.login = response
+
+        return
       })
+  }
+
+  /**
+   * Logout authenticated user
+   *
+   */
+  const logout = async () => {
+    const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
+    const nuxtApp = useNuxtApp()
+
+    if (config.authMode === 'token') {
+      const cookieToken = useCookie(config.tokenStorageKey, { secure: true })
+      const storedToken = useTokenStorage()
+      storedToken.value = null
+      cookieToken.value = null
+    }
+    else if (config.authMode === 'cookie') {
+      await api(config.endpoints.logout, { method: 'POST' })
+    }
+
+    await nuxtApp.runWithContext(() =>
+      navigateTo(config.loginRoute),
+    )
+
+    return
   }
 
   /**
@@ -156,12 +216,14 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.tfa?.enable, { method: 'POST' })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.tfa?.enable, { method: 'POST' }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.enableTwoFactorAuthentication = response
+
+      return
+    })
   }
 
   /**
@@ -185,12 +247,14 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.tfa?.code, { method: 'GET' })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.tfa?.code, { method: 'GET' }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.getTwoFactorAuthenticationQRCode = response
+
+      return
+    })
   }
 
   /**
@@ -214,12 +278,14 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.tfa?.recoveryCode, { method: 'GET' })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.tfa?.recoveryCode, { method: 'GET' }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.showTwoFactorAuthenticationRecoveryCodes = response
+
+      return
+    })
   }
 
   /**
@@ -246,15 +312,17 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.tfa?.challenge, {
-        method: 'POST',
-        body: twoFactorCredentials,
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.tfa?.challenge, {
+      method: 'POST',
+      body: twoFactorCredentials,
+    }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.solveTwoFactorAuthenticationChallenge = response
+
+      return
+    })
   }
 
   /**
@@ -314,16 +382,18 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      // Send a POST request to the server to register a new user
-      return await api(config.endpoints.register as RequestInfo, {
-        method: 'POST',
-        body: registrationCredentials,
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    // Send a POST request to the server to register a new user
+    await api(config.endpoints.register, {
+      method: 'POST',
+      body: registrationCredentials,
+    }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.register = response
+
+      return
+    })
   }
 
   /**
@@ -349,17 +419,19 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(
-        config.endpoints.resendEmailVerificationLink as RequestInfo,
-        {
-          method: 'POST',
-        },
-      )
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(
+      config.endpoints.resendEmailVerificationLink,
+      {
+        method: 'POST',
+      },
+    ).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.resendEmailVerification = response
+
+      return
+    })
   }
 
   /**
@@ -386,15 +458,17 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.resetPassword as RequestInfo, {
-        method: 'POST',
-        body: { email: email },
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.resetPassword, {
+      method: 'POST',
+      body: { email: email },
+    }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.resetPassword = response
+
+      return
+    })
   }
 
   /**
@@ -424,15 +498,17 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.updatePassword as RequestInfo, {
-        method: 'POST',
-        body: resetPasswordCredentials,
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.updatePassword, {
+      method: 'POST',
+      body: resetPasswordCredentials,
+    }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.updatePassword = response
+
+      return
+    })
   }
 
   /**
@@ -451,20 +527,24 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    try {
-      return await api(config.endpoints.confirmPassword as RequestInfo, {
-        method: 'POST',
-        body: { password: password },
-      })
-    }
-    catch (error) {
-      console.log(error)
-    }
+    await api(config.endpoints.confirmPassword as RequestInfo, {
+      method: 'POST',
+      body: { password: password },
+    }).then((response) => {
+      return response
+    }).catch(({ response }) => {
+      console.log(response)
+      error.confirmPassword = response
+
+      return
+    })
   }
 
   return {
     isAuth,
+    error,
     login,
+    logout,
     enableTwoFactorAuthentication,
     getTwoFactorAuthenticationQRCode,
     showTwoFactorAuthenticationRecoveryCodes,

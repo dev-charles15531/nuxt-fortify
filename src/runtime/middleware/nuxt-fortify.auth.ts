@@ -1,34 +1,23 @@
 import type { BaseModuleOptions } from '../types/options'
 import { useFortifyUser } from '../composables/useFortifyUser'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
-import { defineNuxtRouteMiddleware, navigateTo, useRuntimeConfig, useRoute, useCookie } from '#app'
-import { computed } from '#imports'
+import { defineNuxtRouteMiddleware, navigateTo, useRuntimeConfig } from '#app'
 
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware((to, from) => {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
-  const token = useCookie(config.tokenStorageKey, { secure: true })
+  const { user } = useFortifyUser<object>()
 
-  // determine if the user is authenticated
-  const isAuth = computed(() => {
-    let _user: object | null = null
-    const { user, fetchUser } = useFortifyUser()
-
-    _user = user.value ?? fetchUser(config, token.value as string)
-
-    return _user !== null
-  })
-
-  if (isAuth.value === true) {
+  if (user.value) {
     return
   }
-
-  const route = useRoute()
 
   // save current route to be able to redirect to it after login
   if (config.intendedRedirect) {
     const intendedRoute = useFortifyIntendedRedirect()
-    intendedRoute.value = route
+    intendedRoute.value = from.fullPath
   }
 
-  if (to.path !== config.loginRoute) navigateTo(config.loginRoute)
+  if (to.path !== config.loginRoute) {
+    return navigateTo(config.loginRoute)
+  }
 })

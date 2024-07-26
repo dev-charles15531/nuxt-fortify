@@ -53,7 +53,6 @@ export default defineNuxtModule <ModuleOptions>({
       resetPasswords: true,
       emailVerification: true,
     },
-    tfaAfterLogin: false,
     tfaRoute: '/two-factor-authentication',
     logLevel: 1,
     origin: 'http://localhost:3000',

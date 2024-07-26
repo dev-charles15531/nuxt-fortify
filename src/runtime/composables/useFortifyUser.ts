@@ -1,6 +1,6 @@
 import type { BaseModuleOptions } from '../types/options'
-import { useApi } from './useApi'
-import { useState } from '#imports'
+import { useTokenStorage } from './useTokenStorage'
+import { useCookie, useRequestURL, useRuntimeConfig, useState } from '#imports'
 
 /**
  * Fortify currently authenticated user composable.
@@ -8,40 +8,65 @@ import { useState } from '#imports'
  */
 export function useFortifyUser<T>() {
   const user = useState<T | null>('nuxt-fortify-user', () => null)
+  const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
+  const token = useTokenStorage()
+
+  /**
+   * Refresh the user state, fetches it from the API.
+   *
+   */
+  const refreshUser = async () => {
+    const userToken = token.value as string
+
+    const fetchedUser = await fetchUser(config, userToken) as T
+    user.value = fetchedUser
+  }
 
   /**
    * Fetches the user details.
    *
-   * @param {BaseModuleOptions} config - The module configuration.
-   * @param {string} token - The authentication token (API TOKEN).
-   * @returns {Promise<void>} - A Promise that resolves when the user details are fetched.
+   * @param {BaseModuleOptions} moduleConfig - The module configuration.
+   * @param {string} authToken - The authentication token (API TOKEN).
+   * @returns - A Promise that resolves with the user details or null if not authenticated.
    */
   async function fetchUser(
-    config: BaseModuleOptions,
-    token: string,
-  ): Promise<void> {
-    if (config.authMode === 'token') {
-      try {
-        await $fetch(config.endpoints.user, {
-          baseURL: config.baseUrl,
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            Referer: origin,
-            Origin: origin,
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      }
-      catch (error) {
-        console.log(error)
+    moduleConfig: BaseModuleOptions,
+    authToken: string,
+  ) {
+    const requestOrigin = moduleConfig.origin ?? useRequestURL().origin
+    const cookie = useCookie(moduleConfig.cookieKey, { readonly: true })
+
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      Referer: requestOrigin,
+      Origin: requestOrigin,
+    }
+
+    if (moduleConfig.authMode === 'token') {
+      headers.Authorization = `Bearer ${authToken}`
+    }
+    else if (moduleConfig.authMode === 'cookie') {
+      headers[moduleConfig.cookieHeader] = cookie.value as string
+    }
+
+    try {
+      const response = await $fetch(moduleConfig.endpoints.user, {
+        baseURL: moduleConfig.baseUrl,
+        method: 'POST',
+        credentials: moduleConfig.authMode === 'cookie' ? 'include' : undefined,
+        headers,
+      })
+
+      if (response) {
+        return response
       }
     }
-    else if (config.authMode === 'cookie') {
-      const api = useApi()
-      await api(config.endpoints.user, { method: 'POST' })
+    catch (error) {
+      console.log(error)
     }
+
+    return null
   }
 
-  return { user, fetchUser }
+  return { user, refreshUser, fetchUser }
 }

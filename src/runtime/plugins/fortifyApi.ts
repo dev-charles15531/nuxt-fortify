@@ -148,6 +148,7 @@ async function buildRequestHeaders(
   logger: ConsolaInstance,
 ): Promise<HeadersInit> {
   const authMode = config.authMode
+  const origin = config.origin ?? useRequestURL().origin
 
   // Default headers with common values
   let defaultHeaders: HeadersInit = {
@@ -166,7 +167,6 @@ async function buildRequestHeaders(
   }
   else if (authMode === 'cookie') {
     const clientCookies = useRequestHeaders(['cookie'])
-    const origin = config.origin ?? useRequestURL().origin
 
     if (import.meta.server) {
       defaultHeaders = {
@@ -209,28 +209,30 @@ export default defineNuxtPlugin((_nuxtApp) => {
 
     async onResponse({ response }) {
       if (response.ok) {
-        const responseUrl = new URL(response.url)
-        const formattedResponseUrl = `${responseUrl.protocol}//${responseUrl.hostname}${responseUrl.pathname}`
+        if (import.meta.client) {
+          const responseUrl = new URL(response.url)
+          const formattedResponseUrl = `${responseUrl.protocol}//${responseUrl.hostname}${responseUrl.pathname}`
 
-        const configLoginUrl = new URL(config.baseUrl + config.endpoints.login)
-        const formattedConfiLogingUrl = `${configLoginUrl.protocol}//${configLoginUrl.hostname}${configLoginUrl.pathname}`
+          const configLoginUrl = new URL(config.baseUrl + config.endpoints.login)
+          const formattedConfiLogingUrl = `${configLoginUrl.protocol}//${configLoginUrl.hostname}${configLoginUrl.pathname}`
 
-        if (formattedResponseUrl === formattedConfiLogingUrl) {
-          let token = ''
+          if (formattedResponseUrl === formattedConfiLogingUrl) {
+            let token = ''
 
-          // set the auth token if auth mode is token
-          if (config.authMode === 'token') {
-            token = response._data.token
+            // set the auth token if auth mode is token
+            if (config.authMode === 'token') {
+              token = response._data.token
 
-            const cookieToken = useTokenStorage()
-            const storedToken = useCookie(config.tokenStorageKey, { secure: true })
-            storedToken.value = token
-            cookieToken.value = token
+              const cookieToken = useTokenStorage()
+              const storedToken = useCookie(config.tokenStorageKey, { secure: true })
+              storedToken.value = token
+              cookieToken.value = token
+            }
+
+            // initialize authenticated user
+            const { fetchUser } = useFortifyUser()
+            user.value = await fetchUser(config, token as string)
           }
-
-          // initialize authenticated user
-          const { fetchUser } = useFortifyUser()
-          user.value = await fetchUser(config, token as string)
         }
       }
     },
@@ -258,7 +260,7 @@ export default defineNuxtPlugin((_nuxtApp) => {
           // save current route to be able to redirect to it after login
           if (config.intendedRedirect) {
             const intendedRoute = useFortifyIntendedRedirect()
-            intendedRoute.value = route
+            intendedRoute.value = route.fullPath
           }
 
           await _nuxtApp.runWithContext(() => {

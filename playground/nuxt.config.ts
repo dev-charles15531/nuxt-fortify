@@ -1,8 +1,9 @@
 export default defineNuxtConfig({
   modules: ['../src/module'],
   nuxtFortify: {
-    baseUrl: 'http://localhost:80',
+    baseUrl: 'http://localhost',
     authMode: 'cookie',
+    authHome: '/dashboard',
     features: {
       registration: true,
       resetPasswords: true,

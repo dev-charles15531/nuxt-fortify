@@ -38,6 +38,7 @@ export default defineNuxtModule <ModuleOptions>({
         enable: '/user/two-factor-authentication',
         disable: '/user/two-factor-authentication',
         code: '/user/two-factor-qr-code',
+        confirm: '/user/confirmed-two-factor-authentication',
         recoveryCode: '/user/two-factor-recovery-codes',
         challenge: '/two-factor-challenge',
       },

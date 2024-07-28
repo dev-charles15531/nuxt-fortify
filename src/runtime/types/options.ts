@@ -115,6 +115,11 @@ export interface ApiEndpoints {
      */
     code: string
     /**
+     * The endpoint to confirm 2FA.
+     * @default '/user/confirmed-two-factor-authentication'
+     */
+    confirm: string
+    /**
      * The endpoint to retrieve 2FA recovery codes.
      * @default '/user/two-factor-recovery-codes'
      */

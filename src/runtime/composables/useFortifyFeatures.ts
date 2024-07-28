@@ -17,6 +17,7 @@ interface FortifyError {
   login: FetchResponse<unknown> | null
   enableTwoFactorAuthentication: FetchResponse<unknown> | null
   getTwoFactorAuthenticationQRCode: FetchResponse<unknown> | null
+  confirmTwoFactorAuthentication: FetchResponse<unknown> | null
   showTwoFactorAuthenticationRecoveryCodes: FetchResponse<unknown> | null
   solveTwoFactorAuthenticationChallenge: FetchResponse<unknown> | null
   register: FetchResponse<unknown> | null
@@ -32,8 +33,11 @@ export interface FortifyFeatures {
   login: (credentials: Credentials) => Promise<void>
   logout: () => Promise<void>
   enableTwoFactorAuthentication: () => Promise<void>
-  getTwoFactorAuthenticationQRCode: () => Promise<void>
-  showTwoFactorAuthenticationRecoveryCodes: () => Promise<void>
+  getTwoFactorAuthenticationQRCode: () => Promise<null | object>
+  confirmTwoFactorAuthentication: (
+    twoFactorCredentials: TwoFactorCredentials
+  ) => Promise<void>
+  showTwoFactorAuthenticationRecoveryCodes: () => Promise<null | Array<string>>
   solveTwoFactorAuthenticationChallenge: (
     twoFactorCredentials: TwoFactorCredentials
   ) => Promise<void>
@@ -84,11 +88,13 @@ export function useFortifyFeatures(): FortifyFeatures {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
   const nuxtApp = useNuxtApp()
   const api = useApi()
+  const { user } = useFortifyUser()
 
   const error: FortifyError = reactive({
     login: null,
     enableTwoFactorAuthentication: null,
     getTwoFactorAuthenticationQRCode: null,
+    confirmTwoFactorAuthentication: null,
     showTwoFactorAuthenticationRecoveryCodes: null,
     solveTwoFactorAuthenticationChallenge: null,
     register: null,
@@ -100,7 +106,6 @@ export function useFortifyFeatures(): FortifyFeatures {
 
   // determine if the user is authenticated
   const isAuth = computed(() => {
-    const { user } = useFortifyUser()
     return user.value !== null
   })
 
@@ -173,10 +178,10 @@ export function useFortifyFeatures(): FortifyFeatures {
    *
    */
   const logout = async () => {
-    const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
     const nuxtApp = useNuxtApp()
 
     if (config.authMode === 'token') {
+      // clear token cookie and storage
       const cookieToken = useCookie(config.tokenStorageKey, { secure: true })
       const storedToken = useTokenStorage()
       storedToken.value = null
@@ -184,7 +189,13 @@ export function useFortifyFeatures(): FortifyFeatures {
     }
     else if (config.authMode === 'cookie') {
       await api(config.endpoints.logout, { method: 'POST' })
+      // clear cookie
+      const cookie = useCookie(config.cookieKey)
+      cookie.value = null
     }
+
+    // auth user state to null
+    user.value = null
 
     await nuxtApp.runWithContext(() =>
       navigateTo(config.loginRoute),
@@ -232,7 +243,7 @@ export function useFortifyFeatures(): FortifyFeatures {
    *
    * @return {Promise<string>} The QR code svg data as a string.
    */
-  const getTwoFactorAuthenticationQRCode = async (): Promise<void> => {
+  const getTwoFactorAuthenticationQRCode = async (): Promise<null | object> => {
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -245,11 +256,50 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    await api(config.endpoints.tfa?.code, { method: 'GET' }).then((response) => {
-      return response
+    let response = null
+    await api(config.endpoints.tfa?.code, { method: 'GET' }).then((res) => {
+      response = res
+
+      return
     }).catch(({ response }) => {
       console.log(response)
       error.getTwoFactorAuthenticationQRCode = response
+
+      return
+    })
+
+    return response
+  }
+
+  /**
+   * Fetches the QR code for two factor authentication setup.
+   *
+   * Sends a GET request to the server to fetch the QR code for two factor authentication.
+   * @see https://laravel.com/docs/11.x/fortify#enabling-two-factor-authentication
+   *
+   * @return {Promise<string>} The QR code svg data as a string.
+   */
+  const confirmTwoFactorAuthentication = async (
+    twoFactorCredentials: TwoFactorCredentials,
+  ): Promise<void> => {
+    // Check if the 2FA feature is enabled in the config
+    if (!config.features?.twoFactorAuthentication) {
+      throw new Error('2FA feature not enabled. Please enable it from config')
+    }
+
+    // Check if the 2fa confirm endpoint is set in the config
+    if (!config.endpoints.tfa?.confirm) {
+      throw new Error(
+        '2FA confirm endpoint not set. Please set this endpoint from config',
+      )
+    }
+
+    await api(config.endpoints.tfa?.confirm, {
+      method: 'post',
+      body: twoFactorCredentials,
+    }).catch(({ response }) => {
+      console.log(response)
+      error.confirmTwoFactorAuthentication = response
 
       return
     })
@@ -263,7 +313,7 @@ export function useFortifyFeatures(): FortifyFeatures {
    *
    * @return {Promise<void>} - A Promise that resolves when the recovery codes are fetched.
    */
-  const showTwoFactorAuthenticationRecoveryCodes = async (): Promise<void> => {
+  const showTwoFactorAuthenticationRecoveryCodes = async (): Promise<null | Array<string>> => {
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -276,14 +326,18 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    await api(config.endpoints.tfa?.recoveryCode, { method: 'GET' }).then((response) => {
-      return response
+    let response = null
+    await api(config.endpoints.tfa?.recoveryCode, { method: 'GET' }).then((res) => {
+      response = res
+      return
     }).catch(({ response }) => {
       console.log(response)
       error.showTwoFactorAuthenticationRecoveryCodes = response
 
       return
     })
+
+    return response
   }
 
   /**
@@ -313,8 +367,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     await api(config.endpoints.tfa?.challenge, {
       method: 'POST',
       body: twoFactorCredentials,
-    }).then((response) => {
-      return response
     }).catch(({ response }) => {
       console.log(response)
       error.solveTwoFactorAuthenticationChallenge = response
@@ -384,8 +436,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     await api(config.endpoints.register, {
       method: 'POST',
       body: registrationCredentials,
-    }).then((response) => {
-      return response
     }).catch(({ response }) => {
       console.log(response)
       error.register = response
@@ -422,9 +472,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       {
         method: 'POST',
       },
-    ).then((response) => {
-      return response
-    }).catch(({ response }) => {
+    ).catch(({ response }) => {
       console.log(response)
       error.resendEmailVerification = response
 
@@ -459,8 +507,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     await api(config.endpoints.resetPassword, {
       method: 'POST',
       body: { email: email },
-    }).then((response) => {
-      return response
     }).catch(({ response }) => {
       console.log(response)
       error.resetPassword = response
@@ -499,8 +545,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     await api(config.endpoints.updatePassword, {
       method: 'POST',
       body: resetPasswordCredentials,
-    }).then((response) => {
-      return response
     }).catch(({ response }) => {
       console.log(response)
       error.updatePassword = response
@@ -528,8 +572,6 @@ export function useFortifyFeatures(): FortifyFeatures {
     await api(config.endpoints.confirmPassword as RequestInfo, {
       method: 'POST',
       body: { password: password },
-    }).then((response) => {
-      return response
     }).catch(({ response }) => {
       console.log(response)
       error.confirmPassword = response
@@ -545,6 +587,7 @@ export function useFortifyFeatures(): FortifyFeatures {
     logout,
     enableTwoFactorAuthentication,
     getTwoFactorAuthenticationQRCode,
+    confirmTwoFactorAuthentication,
     showTwoFactorAuthenticationRecoveryCodes,
     solveTwoFactorAuthenticationChallenge,
     disableTwoFactorAuthentication,

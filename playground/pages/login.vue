@@ -11,8 +11,8 @@
           Enter your login details
         </h4>
 
-        <div v-if="error">
-          <span class="error">{{ error._data.message }}</span>
+        <div v-if="error.login">
+          <span class="error">{{ error.login._data.message }}</span>
         </div>
 
         <div>

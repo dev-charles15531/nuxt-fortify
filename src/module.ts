@@ -75,9 +75,12 @@ export default defineNuxtModule <ModuleOptions>({
 
     logger.start('Initializing Nuxt Fortify module...')
 
-    // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
+    // Add plugins
+    addPlugin(resolver.resolve('./runtime/plugins/userInit'))
     addPlugin(resolver.resolve('./runtime/plugins/fortifyApi'))
-    addImportsDir(resolver.resolve('./runtime/composables'))
+
+    // Add composables
+    addImportsDir(resolver.resolve('runtime/composables'))
 
     // Add middlewares
     addRouteMiddleware({

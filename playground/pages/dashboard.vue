@@ -6,14 +6,19 @@
       </h2>
     </div>
     <div class="container">
-      <div class="card">
-        <div v-if="user">
+      <div
+        class="card"
+      >
+        <div>
           <h4 class="h4">
             User Details
           </h4>
 
-          <div class="list-container">
-            <span
+          <div
+            v-if="hasUser"
+            class="list-container"
+          >
+            <div
               v-for="(value, key, index) in user"
               :key="index"
               class="list-item"
@@ -22,7 +27,7 @@
               <small>
                 {{ `${value}` }}
               </small>
-            </span>
+            </div>
           </div>
         </div>
 
@@ -45,6 +50,8 @@ definePageMeta({
 })
 const { user } = useFortifyUser()
 const { logout } = useFortifyFeatures()
+
+const hasUser = computed(() => user.value !== null)
 
 const processLogout = async () => {
   await logout()

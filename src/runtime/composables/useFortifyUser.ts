@@ -1,6 +1,6 @@
 import type { BaseModuleOptions } from '../types/options'
 import { useTokenStorage } from './useTokenStorage'
-import { useCookie, useRequestURL, useRuntimeConfig, useState } from '#imports'
+import { useCookie, useRequestHeaders, useRequestURL, useRuntimeConfig, useState } from '#imports'
 
 /**
  * Fortify currently authenticated user composable.
@@ -18,8 +18,7 @@ export function useFortifyUser<T>() {
   const refreshUser = async () => {
     const userToken = token.value as string
 
-    const fetchedUser = await fetchUser(config, userToken) as T
-    user.value = fetchedUser
+    user.value = await fetchUser(config, userToken) as T
   }
 
   /**
@@ -36,7 +35,7 @@ export function useFortifyUser<T>() {
     const requestOrigin = moduleConfig.origin ?? useRequestURL().origin
     const cookie = useCookie(moduleConfig.cookieKey, { readonly: true })
 
-    const headers: Record<string, string> = {
+    let headers: Record<string, string> = {
       Accept: 'application/json',
       Referer: requestOrigin,
       Origin: requestOrigin,
@@ -47,6 +46,14 @@ export function useFortifyUser<T>() {
     }
     else if (moduleConfig.authMode === 'cookie') {
       headers[moduleConfig.cookieHeader] = cookie.value as string
+
+      const clientCookies = useRequestHeaders(['cookie'])
+      if (import.meta.server) {
+        headers = {
+          ...headers,
+          ...(clientCookies.cookie && clientCookies),
+        }
+      }
     }
 
     try {

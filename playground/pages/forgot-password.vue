@@ -11,8 +11,8 @@
           Enter your email to get reset link
         </h4>
 
-        <div v-if="error">
-          <span class="error">{{ error._data.message }}</span>
+        <div v-if="error.resetPassword">
+          <span class="error">{{ error.resetPassword._data.message }}</span>
         </div>
 
         <div>
@@ -50,9 +50,7 @@ const form = ref({
   email: null,
 })
 
-const error = ref(null)
-
-const { resetPassword } = useFortifyFeatures()
+const { error, resetPassword } = useFortifyFeatures()
 
 const sendResetPasswordLink = async () => {
   await resetPassword(form.value.email)

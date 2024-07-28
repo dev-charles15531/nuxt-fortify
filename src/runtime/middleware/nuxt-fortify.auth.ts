@@ -1,11 +1,11 @@
 import type { BaseModuleOptions } from '../types/options'
-import { useFortifyUser } from '../composables/useFortifyUser'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
 import { defineNuxtRouteMiddleware, navigateTo, useRuntimeConfig } from '#app'
+import { useFortifyUser } from '#imports'
 
 export default defineNuxtRouteMiddleware((to, from) => {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
-  const { user } = useFortifyUser<object>()
+  const { user } = useFortifyUser()
 
   if (user.value) {
     return
@@ -18,6 +18,6 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
 
   if (to.path !== config.loginRoute) {
-    return navigateTo(config.loginRoute)
+    return navigateTo(config.loginRoute, { replace: true })
   }
 })

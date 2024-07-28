@@ -11,5 +11,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  if (to.path !== config.authHome) return navigateTo(config.authHome)
+  if (to.path !== config.authHome) return navigateTo(config.authHome, { replace: true })
 })

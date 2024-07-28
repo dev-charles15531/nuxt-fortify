@@ -111,8 +111,6 @@ export function useFortifyFeatures(): FortifyFeatures {
    */
   const login = async (credentials: Credentials) => {
     const currentRoute = useRoute()
-    const { refreshUser } = useFortifyUser()
-    await refreshUser()
 
     if (isAuth.value === true) {
       if (config.authHome === undefined) {

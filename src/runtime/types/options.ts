@@ -55,11 +55,6 @@ export interface BaseModuleOptions {
   features?: FortifyFeatures
 
   /**
-   * Whether to redirect to Two Factor Authentication page after successful login.
-   */
-  tfaAfterLogin: boolean
-
-  /**
    * The route to redirect to for Two Factor Authentication.
    */
   tfaRoute: string

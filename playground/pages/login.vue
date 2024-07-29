@@ -33,6 +33,11 @@
           <NuxtLink to="/forgot-password">
             Forgot password
           </NuxtLink>
+          <br>
+          <br>
+          <NuxtLink to="/solve-2fa">
+            Solve 2FA
+          </NuxtLink>
         </div>
 
         <div>
@@ -42,6 +47,12 @@
           >
             Login
           </button>
+
+          <div class="pt-5">
+            <NuxtLink to="/register">
+              Don't have an account? Register
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </div>

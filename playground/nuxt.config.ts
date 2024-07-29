@@ -11,7 +11,6 @@ export default defineNuxtConfig({
       twoFactorAuthentication: true,
       updatePasswords: true,
     },
-    tfaAfterLogin: true,
     endpoints: {
       csrf: '/sanctum/csrf-cookie',
       login: '/api/login',
@@ -23,6 +22,7 @@ export default defineNuxtConfig({
         code: '/api/user/two-factor-qr-code',
         recoveryCode: '/api/user/two-factor-recovery-codes',
         challenge: '/api/two-factor-challenge',
+        confirm: '/api/user/confirmed-two-factor-authentication',
       },
       register: '/api/register',
       resetPassword: '/api/forgot-password',

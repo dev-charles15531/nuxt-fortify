@@ -89,6 +89,25 @@
           </button>
         </div>
 
+        <div
+          v-if="isConfirmPasswordPanelOpen"
+          class="pt-2"
+        >
+          <h5>Confirm Password</h5>
+          <input
+            v-model="password"
+            type="password"
+            class="input"
+            placeholder="Enter your password"
+          >
+          <button
+            class="btn"
+            @click="processConfirmPassword"
+          >
+            Submit
+          </button>
+        </div>
+
         <div class="pt-2 btn-grid">
           <button
             v-for="(btnAction, index) in actionButtons"
@@ -116,12 +135,16 @@ const {
   getTwoFactorAuthenticationQRCode,
   showTwoFactorAuthenticationRecoveryCodes,
   disableTwoFactorAuthentication,
+  resendEmailVerification,
+  confirmPassword,
 } = useFortifyFeatures()
 const successMssg = ref('')
 const errorMssg = ref('')
 const isConfirm2FAPanelOpen = ref(false)
+const isConfirmPasswordPanelOpen = ref(false)
 const tfaConfirmCode = ref(null)
 const tfaSetupCode = ref(null)
+const password = ref(null)
 const tfaRecoveryCode = ref(null)
 
 const resetMssg = () => {
@@ -149,7 +172,7 @@ const processConfirmTwoFactorAuthentication = async () => {
   resetMssg()
 
   try {
-    await confirmTwoFactorAuthentication()
+    await confirmTwoFactorAuthentication({ code: tfaConfirmCode.value })
 
     successMssg.value = '2FA Confirmed'
   }
@@ -199,8 +222,39 @@ const processShow2FARecoveryCode = async () => {
   }
 }
 
+const processResendEmailVerification = async () => {
+  resetMssg()
+
+  try {
+    await resendEmailVerification()
+
+    successMssg.value = 'Email sent successfully'
+  }
+  catch (error) {
+    errorMssg.value = 'Unable to resend email verification'
+    console.log(error)
+  }
+}
+
+const processConfirmPassword = async () => {
+  resetMssg()
+
+  try {
+    await confirmPassword(password.value)
+
+    successMssg.value = 'Password Confirmed'
+  }
+  catch (error) {
+    errorMssg.value = 'Unable to Confirm password'
+  }
+}
+
 const toggleConfirm2FAPanel = () => {
   isConfirm2FAPanelOpen.value = !isConfirm2FAPanelOpen.value
+}
+
+const toggleConfirmPasswordPanel = () => {
+  isConfirmPasswordPanelOpen.value = !isConfirmPasswordPanelOpen.value
 }
 
 const actionButtons = ref([
@@ -223,6 +277,18 @@ const actionButtons = ref([
   {
     name: 'Disable 2FA',
     func: processDisableTwoFactorAuthentication,
+  },
+  {
+    name: 'Confirm password',
+    func: toggleConfirmPasswordPanel,
+  },
+  {
+    name: 'Resend email verification',
+    func: processResendEmailVerification,
+  },
+  {
+    name: '',
+    func: null,
   },
   {
     name: 'Logout',

@@ -57,10 +57,12 @@ export function useFortifyUser<T>() {
     }
 
     try {
+      const isCredentialsSupported = 'credentials' in Request.prototype
+
       const response = await $fetch(moduleConfig.endpoints.user, {
         baseURL: moduleConfig.baseUrl,
         method: 'POST',
-        credentials: moduleConfig.authMode === 'cookie' ? 'include' : undefined,
+        credentials: isCredentialsSupported ? 'include' : undefined,
         headers,
       })
 

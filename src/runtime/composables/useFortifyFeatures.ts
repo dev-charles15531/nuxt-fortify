@@ -115,6 +115,7 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @param credentials - The user credentials.
    */
   const login = async (credentials: Credentials) => {
+    error.login = null
     const currentRoute = useRoute()
 
     if (isAuth.value === true) {
@@ -143,7 +144,7 @@ export function useFortifyFeatures(): FortifyFeatures {
           }
           else {
             console.log('Module tfaRoute is not configured.')
-            return
+            throw new Error('Module tfaRoute is not configured.')
           }
         }
 
@@ -162,14 +163,13 @@ export function useFortifyFeatures(): FortifyFeatures {
         }
         else {
           console.log('auth home is not configured')
-          return
+          throw new Error('Module tfaRoute is not configured.')
         }
       })
       .catch(({ response }) => {
         console.log(response)
         error.login = response
-
-        return
+        throw new Error('Unable to login.')
       })
   }
 
@@ -213,6 +213,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<void>}
    */
   const enableTwoFactorAuthentication = async (): Promise<void> => {
+    error.enableTwoFactorAuthentication = null
+
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -225,13 +227,10 @@ export function useFortifyFeatures(): FortifyFeatures {
       )
     }
 
-    await api(config.endpoints.tfa?.enable, { method: 'POST' }).then((response) => {
-      return response
-    }).catch(({ response }) => {
+    await api(config.endpoints.tfa?.enable, { method: 'POST' }).catch(({ response }) => {
       console.log(response)
       error.enableTwoFactorAuthentication = response
-
-      return
+      throw new Error('Caouldn\'t enable 2FA')
     })
   }
 
@@ -244,6 +243,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<string>} The QR code svg data as a string.
    */
   const getTwoFactorAuthenticationQRCode = async (): Promise<null | object> => {
+    error.getTwoFactorAuthenticationQRCode = null
+
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -265,7 +266,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.getTwoFactorAuthenticationQRCode = response
 
-      return
+      throw new Error('Unable to retrive 2FA QR code.')
     })
 
     return response
@@ -282,6 +283,8 @@ export function useFortifyFeatures(): FortifyFeatures {
   const confirmTwoFactorAuthentication = async (
     twoFactorCredentials: TwoFactorCredentials,
   ): Promise<void> => {
+    error.confirmTwoFactorAuthentication = null
+
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -300,8 +303,7 @@ export function useFortifyFeatures(): FortifyFeatures {
     }).catch(({ response }) => {
       console.log(response)
       error.confirmTwoFactorAuthentication = response
-
-      return
+      throw new Error('Failed to confirm two factor authentication')
     })
   }
 
@@ -314,6 +316,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<void>} - A Promise that resolves when the recovery codes are fetched.
    */
   const showTwoFactorAuthenticationRecoveryCodes = async (): Promise<null | Array<string>> => {
+    error.showTwoFactorAuthenticationRecoveryCodes = null
+
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -334,7 +338,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.showTwoFactorAuthenticationRecoveryCodes = response
 
-      return
+      throw new Error('Failed to retrieve two factor authentication recovery codes')
     })
 
     return response
@@ -352,6 +356,8 @@ export function useFortifyFeatures(): FortifyFeatures {
   const solveTwoFactorAuthenticationChallenge = async (
     twoFactorCredentials: TwoFactorCredentials,
   ): Promise<void> => {
+    error.solveTwoFactorAuthenticationChallenge = null
+
     // Check if the 2FA feature is enabled in the config
     if (!config.features?.twoFactorAuthentication) {
       throw new Error('2FA feature not enabled. Please enable it from config')
@@ -370,8 +376,7 @@ export function useFortifyFeatures(): FortifyFeatures {
     }).catch(({ response }) => {
       console.log(response)
       error.solveTwoFactorAuthenticationChallenge = response
-
-      return
+      throw new Error('Unable to solve 2FA challenge')
     })
   }
 
@@ -401,6 +406,7 @@ export function useFortifyFeatures(): FortifyFeatures {
     }
     catch (error) {
       console.log(error)
+      throw new Error('couldn\'t disable 2FA feature.')
     }
   }
 
@@ -418,6 +424,8 @@ export function useFortifyFeatures(): FortifyFeatures {
   const register = async (
     registrationCredentials: RegistrationCredentials,
   ): Promise<void> => {
+    error.register = null
+
     // Check if the registration feature is enabled in the config
     if (!config.features?.registration) {
       throw new Error(
@@ -440,7 +448,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.register = response
 
-      return
+      throw new Error('couldn\'t complete registration.')
     })
   }
 
@@ -453,6 +461,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
    */
   const resendEmailVerification = async (): Promise<void> => {
+    error.resendEmailVerification = null
+
     // Check if the email verification feature is enabled in the config
     if (!config.features?.emailVerification) {
       throw new Error(
@@ -476,7 +486,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.resendEmailVerification = response
 
-      return
+      throw new Error('Unable to resend email verification link.')
     })
   }
 
@@ -490,6 +500,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
    */
   const resetPassword = async (email: string): Promise<void> => {
+    error.resetPassword = null
+
     // Check if the reset password feature is enabled in the config
     if (!config.features?.resetPasswords) {
       throw new Error(
@@ -511,7 +523,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.resetPassword = response
 
-      return
+      throw new Error('Unable to process reset password.')
     })
   }
 
@@ -528,6 +540,8 @@ export function useFortifyFeatures(): FortifyFeatures {
   const updatePassword = async (
     resetPasswordCredentials: ResetPasswordCredentials,
   ): Promise<void> => {
+    error.updatePassword = null
+
     // Check if the update password feature is enabled in the config
     if (!config.features?.updatePasswords) {
       throw new Error(
@@ -549,7 +563,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.updatePassword = response
 
-      return
+      throw new Error('Unable to process password update.')
     })
   }
 
@@ -562,6 +576,8 @@ export function useFortifyFeatures(): FortifyFeatures {
    * @return {Promise<void>} A Promise that resolves when the request is successfully sent.
    */
   const confirmPassword = async (password: string): Promise<void> => {
+    error.confirmPassword = null
+
     // Check if the confirm password endpoint is set in the config
     if (!config.endpoints?.confirmPassword) {
       throw new Error(
@@ -576,7 +592,7 @@ export function useFortifyFeatures(): FortifyFeatures {
       console.log(response)
       error.confirmPassword = response
 
-      return
+      throw new Error('Unable to process password confirmation.')
     })
   }
 

@@ -1,5 +1,5 @@
 import { createConsola, type ConsolaInstance } from 'consola'
-import type { FetchOptions } from 'ofetch'
+import type { FetchOptions, FetchResponse } from 'ofetch'
 import { useFortifyIntendedRedirect } from '../composables/useFortifyIntendedRedirect'
 import { useFortifyUser } from '../composables/useFortifyUser'
 import { useTokenStorage } from '../composables/useTokenStorage'
@@ -191,6 +191,26 @@ async function buildRequestHeaders(
   return defaultHeaders
 }
 
+async function postAuth(config: BaseModuleOptions, response: FetchResponse<{ token?: string }>) {
+  let token = ''
+
+  // set the auth token if auth mode is token
+  if (config.authMode === 'token') {
+    token = response._data!.token as string
+
+    const cookieToken = useTokenStorage()
+    const storedToken = useCookie(config.tokenStorageKey, { secure: true })
+    storedToken.value = token
+    cookieToken.value = token
+  }
+
+  // initialize authenticated user
+  const { fetchUser } = useFortifyUser()
+  // user.value = await fetchUser(config, token as string)
+  const data = await fetchUser(config, token as string)
+  return data
+}
+
 export default defineNuxtPlugin((_nuxtApp) => {
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
   const { user } = useFortifyUser()
@@ -216,22 +236,18 @@ export default defineNuxtPlugin((_nuxtApp) => {
           const configLoginUrl = new URL(config.baseUrl + config.endpoints.login)
           const formattedConfiLogingUrl = `${configLoginUrl.protocol}//${configLoginUrl.hostname}${configLoginUrl.pathname}`
 
+          const config2FAChallengeUrl = new URL(config.baseUrl + config.endpoints.tfa?.challenge)
+          const formattedConfig2FAChallengeUrl = `${config2FAChallengeUrl.protocol}//${config2FAChallengeUrl.hostname}${config2FAChallengeUrl.pathname}`
+
           if (formattedResponseUrl === formattedConfiLogingUrl) {
-            let token = ''
-
-            // set the auth token if auth mode is token
-            if (config.authMode === 'token') {
-              token = response._data.token
-
-              const cookieToken = useTokenStorage()
-              const storedToken = useCookie(config.tokenStorageKey, { secure: true })
-              storedToken.value = token
-              cookieToken.value = token
+            if (Object.keys(response._data).includes('two_factor')) {
+              if (response._data.two_factor == false) {
+                user.value = await postAuth(config, response)
+              }
             }
-
-            // initialize authenticated user
-            const { fetchUser } = useFortifyUser()
-            user.value = await fetchUser(config, token as string)
+          }
+          else if (formattedResponseUrl === formattedConfig2FAChallengeUrl) {
+            user.value = await postAuth(config, response)
           }
         }
       }

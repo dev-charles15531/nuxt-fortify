@@ -14,6 +14,14 @@
         <div v-if="error.resetPassword">
           <span class="error">{{ error.resetPassword._data.message }}</span>
         </div>
+        <div
+          v-if="successMssg"
+          class="pt-5"
+        >
+          <h6 style="color: green;">
+            {{ successMssg }}
+          </h6>
+        </div>
 
         <div>
           <input
@@ -49,10 +57,20 @@ definePageMeta({
 const form = ref({
   email: null,
 })
+const successMssg = ref('')
 
 const { error, resetPassword } = useFortifyFeatures()
 
 const sendResetPasswordLink = async () => {
-  await resetPassword(form.value.email)
+  successMssg.value = ''
+
+  try {
+    await resetPassword(form.value.email)
+
+    successMssg.value = 'Link sent successfully'
+  }
+  catch (error) {
+    console.log(error)
+  }
 }
 </script>

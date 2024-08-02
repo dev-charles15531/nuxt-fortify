@@ -185,7 +185,7 @@ const getTwoFactorAuthenticationSetupCode = async () => {
   resetMssg()
 
   try {
-    const response = await getTwoFactorAuthenticationQRCode()
+    const response = tfaSetupCode.value ? null : await getTwoFactorAuthenticationQRCode()
     tfaSetupCode.value = tfaSetupCode.value ? null : response.svg
 
     successMssg.value = tfaRecoveryCode.value ? '2FA setup code below' : ''

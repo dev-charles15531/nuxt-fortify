@@ -11,6 +11,10 @@
           Enter your 2FA details
         </h4>
 
+        <p>
+          <em>NOTE:</em> <small>When on cookie auth mode, this page will always return "code invalid". You must be authenticated first before solving 2FA</small>
+        </p>
+
         <div v-if="error.solveTwoFactorAuthenticationChallenge">
           <span class="error">{{ error.solveTwoFactorAuthenticationChallenge._data.message }}</span>
         </div>
@@ -35,10 +39,16 @@
 
         <div>
           <input
-            v-model="tfaSolveCode"
+            v-model="tfaCredentials.code"
             type="text"
             class="input"
             placeholder="Enter 2FA code to solve"
+          >
+          <input
+            v-model="tfaCredentials.recovery_code"
+            type="text"
+            class="input"
+            placeholder="Enter 2FA recovery code to solve"
           >
 
           <NuxtLink to="/login">
@@ -64,7 +74,10 @@ definePageMeta({
   middleware: ['fortify:guest'],
 })
 
-const tfaSolveCode = ref(null)
+const tfaCredentials = reactive({
+  code: null,
+  recovery_code: null,
+})
 const successMssg = ref('')
 const errorMssg = ref('')
 
@@ -79,7 +92,7 @@ const processSolveTwoFactorAuthentication = async () => {
   resetMssg()
 
   try {
-    await solveTwoFactorAuthenticationChallenge({ recovery_code: tfaSolveCode.value })
+    await solveTwoFactorAuthenticationChallenge(tfaCredentials)
 
     successMssg.value = '2FA Solved correct!'
   }

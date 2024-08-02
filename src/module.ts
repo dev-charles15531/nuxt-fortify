@@ -92,5 +92,19 @@ export default defineNuxtModule <ModuleOptions>({
       name: 'fortify:guest',
       path: resolver.resolve('./runtime/middleware/nuxt-fortify.guest'),
     })
+
+    // middleware for 2FA route
+    if (nuxtFortifyConfig.authMode === 'cookie') {
+      addRouteMiddleware({
+        name: 'fortify:2fa',
+        path: resolver.resolve('./runtime/middleware/nuxt-fortify.guest'),
+      })
+    }
+    else if (nuxtFortifyConfig.authMode === 'token') {
+      addRouteMiddleware({
+        name: 'fortify:2fa',
+        path: resolver.resolve('./runtime/middleware/nuxt-fortify.auth'),
+      })
+    }
   },
 })

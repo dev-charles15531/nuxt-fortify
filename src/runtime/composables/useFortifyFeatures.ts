@@ -180,6 +180,8 @@ export function useFortifyFeatures(): FortifyFeatures {
   const logout = async () => {
     const nuxtApp = useNuxtApp()
 
+    await api(config.endpoints.logout, { method: 'POST' })
+
     if (config.authMode === 'token') {
       // clear token cookie and storage
       const cookieToken = useCookie(config.tokenStorageKey, { secure: true })
@@ -188,7 +190,6 @@ export function useFortifyFeatures(): FortifyFeatures {
       cookieToken.value = null
     }
     else if (config.authMode === 'cookie') {
-      await api(config.endpoints.logout, { method: 'POST' })
       // clear cookie
       const cookie = useCookie(config.cookieKey)
       cookie.value = null

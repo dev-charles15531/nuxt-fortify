@@ -50,7 +50,7 @@
 
 <script setup>
 definePageMeta({
-  middleware: ['fortify:auth'],
+  middleware: ['fortify:2fa'],
 })
 
 const {

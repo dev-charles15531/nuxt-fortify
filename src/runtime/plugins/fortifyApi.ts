@@ -191,22 +191,33 @@ async function buildRequestHeaders(
   return defaultHeaders
 }
 
+/**
+ * Function to return user data after receiving auth response from the server.
+ *
+ * @param {BaseModuleOptions} config - The module configuration.
+ * @param {FetchResponse<{token?: string}>} response - The response from the server.
+ * @returns {Promise<any>} - The authenticated user's data.
+ */
 async function postAuth(config: BaseModuleOptions, response: FetchResponse<{ token?: string }>) {
   let token = ''
 
-  // set the auth token if auth mode is token
+  // Set the auth token if auth mode is token
   if (config.authMode === 'token') {
-    token = response._data!.token as string
+    if (Object.keys(response._data!).includes('token')) {
+      token = response._data!.token as string
 
-    const cookieToken = useTokenStorage()
-    const storedToken = useCookie(config.tokenStorageKey, { secure: true })
-    storedToken.value = token
-    cookieToken.value = token
+      const cookieToken = useTokenStorage()
+      const storedToken = useCookie(config.tokenStorageKey, { secure: true })
+      storedToken.value = token
+      cookieToken.value = token
+    }
+    else {
+      token = useCookie(config.tokenStorageKey, { secure: true }).value as string
+    }
   }
 
-  // initialize authenticated user
+  // Initialize authenticated user
   const { fetchUser } = useFortifyUser()
-  // user.value = await fetchUser(config, token as string)
   const data = await fetchUser(config, token as string)
   return data
 }
@@ -243,6 +254,11 @@ export default defineNuxtPlugin((_nuxtApp) => {
             if (Object.keys(response._data).includes('two_factor')) {
               if (response._data.two_factor == false) {
                 user.value = await postAuth(config, response)
+              }
+              else {
+                if (config.authMode == 'token') {
+                  user.value = await postAuth(config, response)
+                }
               }
             }
           }

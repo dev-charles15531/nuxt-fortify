@@ -9,16 +9,15 @@ import { useCookie, useRequestHeaders, useRequestURL, useRuntimeConfig, useState
 export function useFortifyUser<T>() {
   const user = useState<T | null>('nuxt-fortify-user', () => null)
   const config = useRuntimeConfig().public.nuxtFortify as BaseModuleOptions
-  const token = useTokenStorage()
 
   /**
    * Refresh the user state, fetches it from the API.
    *
    */
   const refreshUser = async () => {
-    const userToken = token.value as string
+    const token = useTokenStorage().value ?? useCookie(config.tokenStorageKey).value
 
-    user.value = await fetchUser(config, userToken) as T
+    user.value = await fetchUser(config, token as string) as T
   }
 
   /**
@@ -62,7 +61,7 @@ export function useFortifyUser<T>() {
       const response = await $fetch(moduleConfig.endpoints.user, {
         baseURL: moduleConfig.baseUrl,
         method: 'POST',
-        credentials: isCredentialsSupported ? 'include' : undefined,
+        credentials: config.authMode == 'cookie' ? isCredentialsSupported ? 'include' : undefined : undefined,
         headers,
       })
 

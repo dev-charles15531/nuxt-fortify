@@ -18,11 +18,17 @@
 
         <div>
           <input
-            v-model="tfaCode"
+            v-model="tfaCredentials.code"
             type="text"
             class="input"
             placeholder="Email 2FA code"
             name="code"
+          >
+          <input
+            v-model="tfaCredentials.recovery_code"
+            type="text"
+            class="input"
+            placeholder="Enter 2FA RECOVERY code"
           >
           <NuxtLink to="/login">
             Back to login
@@ -44,7 +50,7 @@
 
 <script setup>
 definePageMeta({
-  middleware: ['fortify:guest'],
+  middleware: ['fortify:auth'],
 })
 
 const {
@@ -52,11 +58,15 @@ const {
   solveTwoFactorAuthenticationChallenge,
 } = useFortifyFeatures()
 
-const tfaCode = ref(null)
+const tfaCredentials = reactive({
+  code: null,
+  recovery_code: null,
+})
 
 const process2FA = async () => {
   try {
-    await solveTwoFactorAuthenticationChallenge({ code: tfaCode.value })
+    await solveTwoFactorAuthenticationChallenge(tfaCredentials)
+    console.log('2FA confirmed')
 
     return navigateTo('/dashboard')
   }

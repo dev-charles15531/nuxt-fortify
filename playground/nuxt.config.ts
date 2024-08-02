@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   modules: ['../src/module'],
   nuxtFortify: {
     baseUrl: 'http://localhost',
-    authMode: 'cookie',
+    authMode: 'token',
     authHome: '/dashboard',
     features: {
       registration: true,

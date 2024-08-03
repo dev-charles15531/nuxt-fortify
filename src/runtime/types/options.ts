@@ -1,5 +1,3 @@
-import type { LogLevel } from 'consola'
-
 /**
  * Options to be passed to the module.
  */
@@ -62,7 +60,7 @@ export interface BaseModuleOptions {
   /**
    * The log level to use for the module.
    */
-  logLevel: LogLevel
+  logLevel: 0 | 1 | 2 | 3 | 4 | 5
 
   /**
    * The origin to use for CORS requests.

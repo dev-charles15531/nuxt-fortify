@@ -18,140 +18,22 @@ This Nuxt module seamlessly integrates Nuxt with Laravel Fortify and Sanctum in 
 
 ## 🛠️ Installation and Configuration
 
-To get started, you need to install Laravel Fortify and Sanctum in your backend Laravel application and follow the configuration steps below.
+<div style="border: 1px solid #f0f8ff; padding: 15px; background-color: #fff9c4; border-radius: 5px; color: black;">
+  <strong>💡 Notice:</strong> 
 
-### 🍪 For Cookie Mode
+  You need to install and setup
+  [Laravel Fortify](https://laravel.com/docs/11.x/fortify), [Laravel Sanctum](https://laravel.com/docs/11.x/sanctum), and [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package in your backend Laravel application.
+  - The [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package easily integrates Laravel Fortify's authentication features with Laravel Sanctum
+</div>
 
-1. **Disable Fortify Views**: Set `'views' => false` in your Fortify config.
-2. **Sanctum Configuration**: Follow the steps in the [Sanctum documentation](https://laravel.com/docs/11.x/sanctum#spa-configuration) to configure your First-Party domains.
-3. **User Endpoint**: Create a `POST` request endpoint to return the currently authenticated user.
-    ```php
-    use Illuminate\Http\Request;
+<br>
 
-    Route::post('/user', function (Request $request) {
-        return $request->user();
-    })->middleware([config('fortify.auth_middleware', 'auth').':'.config('fortify.guard')]);
-    ```
-4. **Override Reset Password Route**: Override the default reset link route.
-    ```php
-    use Laravel\Fortify\Http\Controllers\NewPasswordController;
-    use Laravel\Fortify\RoutePath;
+- Add `nuxt-fortify` module to your nuxt project
+```
+npx nuxi@latest module add nuxt-fortify
+```
 
-    Route::get(RoutePath::for('password.reset', '/reset-password/{token}'), [NewPasswordController::class, 'create'])
-        ->middleware(['guest:' . config('fortify.guard')])
-        ->name('password.reset');
-    ```
 
-### 🧩 For Token Mode
-
-1. **Fortify Config**:
-    - Set `guard` to `'sanctum'`.
-    - Set `middleware` to `['api']`.
-    - Set `'views' => false`.
-2. **Environment Variables**:
-    - Set `SANCTUM_STATEFUL_DOMAINS` to `null` in `.env`.
-    - Set `supports_credentials` to `false` in your CORS config.
-3. **User Endpoint**: Create a `POST` request endpoint to return the currently authenticated user.
-    ```php
-    use Illuminate\Http\Request;
-
-    Route::post('/user', function (Request $request) {
-        return $request->user();
-    })->middleware(['auth:sanctum']);
-    ```
-4. **Login Endpoint**: Create a `POST` request endpoint to authenticate the request.
-    ```php
-    use Illuminate\Http\Request;
-    use App\Models\User;
-    use Illuminate\Support\Facades\Hash;
-    use Illuminate\Validation\ValidationException;
-    use Laravel\Fortify\TwoFactorAuthenticatable;
-
-    Route::post('/login', function (Request $request) {
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $token = $request->has('device_name') ?
-            $user->createToken($request->device_name)->plainTextToken :
-            $user->createToken($request->email)->plainTextToken;
-
-        if (
-            optional($user)->two_factor_secret &&
-            !is_null(optional($user)->two_factor_confirmed_at) &&
-            in_array(TwoFactorAuthenticatable::class, class_uses_recursive($user))
-        ) {
-            return response()->json([
-                'two_factor' => true,
-                'token' => $token,
-            ]);
-        } else {
-            return response()->json(['token' => $token]);
-        }
-    });
-    ```
-5. **Logout Endpoint**: Create a `POST` request endpoint to revoke tokens.
-    ```php
-    use Illuminate\Http\Request;
-
-    Route::post('/logout', function (Request $request) {
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json(['logged out']);
-    })->middleware('auth:sanctum');
-    ```
-6. **Override Reset Password Route**: Override the default reset link route.
-    ```php
-    use Laravel\Fortify\Http\Controllers\NewPasswordController;
-    use Laravel\Fortify\RoutePath;
-
-    Route::get(RoutePath::for('password.reset', '/reset-password/{token}'), [NewPasswordController::class, 'create'])
-        ->middleware(['guest:' . config('fortify.guard')])
-        ->name('password.reset');
-    ```
-7. **Confirm Password Endpoint**: Override the default confirm password route.
-    ```php
-    use Illuminate\Http\Request;
-    use Illuminate\Support\Facades\Hash;
-    use Laravel\Fortify\Contracts\FailedPasswordConfirmationResponse;
-    use Laravel\Fortify\Contracts\PasswordConfirmedResponse;
-
-    Route::post('/user/confirm-password', function (Request $request) {
-        $user = $request->user();
-        $password = $request->input('password');
-
-        $confirmed = Hash::check($password, $user->password);
-
-        return $confirmed
-            ? app(PasswordConfirmedResponse::class)
-            : app(FailedPasswordConfirmationResponse::class);
-    })->middleware([config('fortify.auth_middleware', 'auth') . ':' . config('fortify.guard')])->name('password.confirm');
-    ```
-8. **Registration Endpoint**: Override the default register route.
-    ```php
-    use Illuminate\Http\Request;
-    use Laravel\Fortify\Fortify;
-    use Laravel\Fortify\Contracts\CreatesNewUsers;
-    use Illuminate\Auth\Events\Registered;
-    use Illuminate\Support\Str;
-    use Laravel\Fortify\Contracts\RegisterResponse;
-
-    Route::post('/register', function (Request $request, CreatesNewUsers $creator) {
-        if (config('fortify.lowercase_usernames')) {
-            $request->merge([
-                Fortify::username() => Str::lower($request->{Fortify::username()}),
-            ]);
-        }
-
-        event(new Registered($user = $creator->create($request->all())));
-
-        return app(RegisterResponse::class);
-    });
-    ```
 ## 💻 Nuxt Configuration
 
 Add the module to your Nuxt project by installing it and configuring it in `nuxt.config.js`.

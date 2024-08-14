@@ -18,17 +18,12 @@ This Nuxt module seamlessly integrates Nuxt with Laravel Fortify and Sanctum in 
 
 ## 🛠️ Installation and Configuration
 
-<div style="border: 1px solid #f0f8ff; padding: 15px; background-color: #fff9c4; border-radius: 5px; color: black;">
-  <strong>💡 Notice:</strong> 
-
-  You need to install and setup
-  [Laravel Fortify](https://laravel.com/docs/11.x/fortify), [Laravel Sanctum](https://laravel.com/docs/11.x/sanctum), and [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package in your backend Laravel application.
-  - The [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package easily integrates Laravel Fortify's authentication features with Laravel Sanctum
-</div>
-
+💡**Notice:** You need to install and setup
+  [Laravel Fortify](https://laravel.com/docs/11.x/fortify), [Laravel Sanctum](https://laravel.com/docs/11.x/sanctum), and [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package in your backend Laravel application. The [fortify-sanctum](https://laravel.com/docs/11.x/fortify) package easily integrates Laravel Fortify's authentication features with Laravel Sanctum
+  
 <br>
 
-- Add `nuxt-fortify` module to your nuxt project
+Add `nuxt-fortify` module to your nuxt project
 ```
 npx nuxi@latest module add nuxt-fortify
 ```
